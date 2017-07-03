@@ -5,11 +5,11 @@
 const {ipcRenderer} = require('electron')
 
 function drawGrayscaleBytes(canvas, rom) {
-  var ctx = canvas.getContext('2d')
+  let ctx = canvas.getContext('2d')
 
-  var id = ctx.createImageData(canvas.width, canvas.height)
-  for (var i = 0; i < rom.length; ++i) {
-    var di = i * 4
+  let id = ctx.createImageData(canvas.width, canvas.height)
+  for (let i = 0; i < rom.length; ++i) {
+    let di = i * 4
     id.data[di++] = rom[i]
     id.data[di++] = rom[i]
     id.data[di++] = rom[i]
@@ -19,7 +19,7 @@ function drawGrayscaleBytes(canvas, rom) {
 }
 
 function drawRom(rom) {
-  var canvas = document.getElementById('romCanvas')
+  let canvas = document.getElementById('romCanvas')
   // Resize the height of the canvas based on the size of the rom.
   canvas.height = rom.length / canvas.width
   drawGrayscaleBytes(canvas, rom)

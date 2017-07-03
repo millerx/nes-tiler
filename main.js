@@ -32,13 +32,6 @@ function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 896, height: 624})
 
-  // and load the index.html of the app.
-  mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'index.html'),
-    protocol: 'file:',
-    slashes: true
-  }))
-
   // Create main menu.
   //createMenu()
 
@@ -48,7 +41,7 @@ function createWindow () {
   // Emitted when the window is loaded.
   mainWindow.webContents.on('did-finish-load', () => {
     // Load an NES ROM.
-    var rom = nesRom.readRom('BlasterMaster.nes')
+    const rom = nesRom.readRom('BlasterMaster.nes')
     mainWindow.webContents.send('rom-loaded', rom.rom_no_header)
   })
 
@@ -59,6 +52,13 @@ function createWindow () {
     // when you should delete the corresponding element.
     mainWindow = null
   })
+
+  // and load the index.html of the app.
+  mainWindow.loadURL(url.format({
+    pathname: path.join(__dirname, 'index.html'),
+    protocol: 'file:',
+    slashes: true
+  }))
 }
 
 // This method will be called when Electron has finished
