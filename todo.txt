@@ -1,0 +1,2 @@
+Choose a ROM via menu option.
+Choose a ROM by dragging it onto a start screen.

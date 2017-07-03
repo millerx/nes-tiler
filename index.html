@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>NES Tiler</title>
+    <style>
+    body {
+      color: #ffffff;
+      background-color: #000000;
+      font-family: sans-serif;
+      font-weight: bold;
+      font-size: 0.75em;
+    }
+    .leftSide {
+      float: left;
+      height: 100vh;
+      background-color: #000000;
+    }
+    .romwindow {
+      width: 400px;
+      height: 90%;
+      overflow: auto;
+    }
+    .rightSide {
+      float: right;
+      width: 47%;
+    }
+    .subwindow {
+      margin-bottom: 8px;
+    }
+    .arranger {
+    }
+    .editor {
+    }
+    .palette {
+    }
+    </style>
+  </head>
+  <body>
+    <div class="leftSide">
+      Rom Window
+      <div class="romwindow">
+        <canvas id="romCanvas" width="400" height="1024"></canvas>
+      </div>
+    </div>
+    <div class="rightSide">
+      <div>
+        Arranger
+        <div class="subwindow arranger">
+          <canvas id="arrangerCanvas" width="400" height="256"></canvas>
+        </div>
+      </div>
+      <div>
+        Tile Editor
+        <div class="subwindow editor">
+          <canvas id="editorCanvas" width="256" height="128"></canvas>
+        </div>
+      </div>
+      <div>
+        Palette
+        <div class="subwindow palette">
+          <canvas id="paletteCanvas" width="256" height="128"></canvas>
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    // You can also require other files to run in this process
+    require('./renderer.js')
+  </script>
+</html>
