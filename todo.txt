@@ -1,2 +1,3 @@
+Rename rom.js to match bmm-node folder.
 Choose a ROM via menu option.
 Choose a ROM by dragging it onto a start screen.
