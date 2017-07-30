@@ -1,0 +1,5 @@
+Glossary of terms
+
+"nes rom"	Dumped bytes from an NES cartridge
+tile		8x8 pixels of either background or sprite.  What NES may refer to as a character or CHR.
+"tile map"	Array of tiles.  What is sitting in ROM that the game loads into the PPU's pattern table.
