@@ -6,7 +6,7 @@ const Menu = electron.Menu
 const path = require('path')
 const url = require('url')
 
-const nesRom = require('./rom.js')
+const nesRom = require('./nesRom.js')
 const nesChr = require('./nesPatternTable.js')
 
 // Keep a global reference of the window object, if you don't, the window will
