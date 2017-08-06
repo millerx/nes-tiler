@@ -8,10 +8,14 @@ const CHR_WIDTH = 8
 const CHR_HEIGHT = 8
 const CHR_PIXEL_SIZE = 8*8
 const RGBA_LEN = 4
+const TILESET_WIDTH = 40  // Tiles to draw on a single row.
+const EDITOR_SCALE = 16
+
+let _tileSet = null
 
 // Not used.
 function drawGrayscaleBytes(canvas, rom) {
-  let ctx = canvas.getContext('2d')
+  let ctx = canvas.getContext('2d', {alpha: false})
 
   let id = ctx.createImageData(canvas.width, canvas.height)
   for (let i = 0; i < rom.length; ++i) {
@@ -57,7 +61,7 @@ function writeImageData(imgData, tile, x, y) {
         imgData.data[idI++] = 0
         imgData.data[idI++] = 0
         imgData.data[idI++] = 0
-        imgData.data[idI++] = 0
+        imgData.data[idI++] = 255
         break
       case 1:
         imgData.data[idI++] = 255
@@ -89,15 +93,14 @@ function drawTileSet(tiles) {
   let canvas = document.getElementById('romCanvas')
 
   // Adjust canvas size to number of tiles.
-  const TILE_WIDTH = 40  // Tiles to draw on a single row.
-  canvas.height = tiles.length / TILE_WIDTH * CHR_HEIGHT
+  canvas.height = tiles.length / TILESET_WIDTH * CHR_HEIGHT
 
-  let ctx = canvas.getContext('2d')
+  let ctx = canvas.getContext('2d', {alpha: false})
 
   imgData = ctx.createImageData(canvas.width, canvas.height)
 
   for (i = 0; i < tiles.length; ++i) {
-    writeImageData(imgData, tiles[i], (i % TILE_WIDTH), ~~(i / TILE_WIDTH))
+    writeImageData(imgData, tiles[i], (i % TILESET_WIDTH), ~~(i / TILESET_WIDTH))
   }
 
   ctx.putImageData(imgData, 0, 0)
@@ -108,5 +111,66 @@ function drawTileSet(tiles) {
  * tileSet  Array of tiles.  Tiles are 8*8 ArrayBuffers.
  */
 ipcRenderer.on('tileSet-loaded', (event, tileSet) => {
+  _tileSet = tileSet
+  init()
   drawTileSet(tileSet)
 })
+
+/**
+ * Not used but keeping for debugging.
+ */
+function drawGreenBox(canvas, x, y) {
+  let ctx = canvas.getContext('2d')
+  ctx.fillStyle = "rgba(0, 255, 0, 0.5)"
+  ctx.fillRect(x, y, 8, 8)
+}
+
+function onRomCanvasClick(mouseEvent) {
+  // pixelXY = mouseEvent.offset*
+  // tileXY = mouseEvent.offset* >> 3 // Div 8
+  // pixelInTileXY = mouseEvent.offset* % 8
+
+  const tileX = mouseEvent.offsetX >> 3  // Divide by 8
+  const tileY = mouseEvent.offsetY >> 3  // Divide by 8
+  const tileIndex = (tileY * TILESET_WIDTH) + tileX
+
+  drawEditorCanvas(tileX, tileY)
+}
+
+function initRomCanvas() {
+  let canvas = document.getElementById('romCanvas')
+  canvas.addEventListener('click', onRomCanvasClick)
+}
+
+function initEditorCanvas() {
+  let canvas = document.getElementById('editorCanvas')
+  // Resize the canvas.
+  canvas.width = EDITOR_SCALE * CHR_WIDTH
+  canvas.height = EDITOR_SCALE * CHR_HEIGHT
+
+  let ctx = canvas.getContext('2d', {alpha: false})
+  ctx.imageSmoothingEnabled = false
+  ctx.scale(EDITOR_SCALE, EDITOR_SCALE)
+}
+
+/**
+ * Draws a tile in the Editor window.
+ * tileX/Y are tile coordinates.
+ */
+function drawEditorCanvas(tileX, tileY) {
+  let canvas = document.getElementById('editorCanvas')
+
+  const romCanvas = document.getElementById('romCanvas')
+
+  // getContext with {alpha: false} is important here because we re-draw over the old tile.
+  let ctx = canvas.getContext('2d', {alpha: false})
+
+  ctx.drawImage(romCanvas,
+    tileX*CHR_WIDTH, tileY*CHR_HEIGHT, CHR_WIDTH, CHR_HEIGHT,
+    0, 0, CHR_WIDTH, CHR_HEIGHT)
+}
+
+function init() {
+  initRomCanvas()
+  initEditorCanvas()
+}

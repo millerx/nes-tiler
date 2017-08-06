@@ -31,7 +31,7 @@ function createMenu() {
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 896, height: 624})
+  mainWindow = new BrowserWindow({width: 928, height: 624})
 
   // Create main menu.
   //createMenu()
