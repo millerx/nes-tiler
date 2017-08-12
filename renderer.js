@@ -14,6 +14,11 @@ const TILESET_WIDTH = 40  // Tiles to draw on a single row.
 const EDITOR_SCALE = 16
 
 let _tileSet = null
+let _editorUnscaledCanvas = null  // Offscreen canvas for Editor view.
+
+function getContext2DNA(canvas) {
+  return canvas.getContext('2d', {alpha: false})
+}
 
 /**
  * Initialize functions.
@@ -30,13 +35,17 @@ function initEditorCanvas() {
   canvas.width = EDITOR_SCALE * CHR_WIDTH
   canvas.height = EDITOR_SCALE * CHR_HEIGHT
 
-  let ctx = canvas.getContext('2d', {alpha: false})
+  let ctx = getContext2DNA(canvas)
   ctx.imageSmoothingEnabled = false
   ctx.scale(EDITOR_SCALE, EDITOR_SCALE)
 
   // Canvas is white by default.
   ctx.fillStyle = 'black'
   ctx.fillRect(0, 0, CHR_WIDTH, CHR_HEIGHT)
+
+  _editorUnscaledCanvas = document.createElement('canvas')
+  _editorUnscaledCanvas.width = CHR_WIDTH
+  _editorUnscaledCanvas.height = CHR_HEIGHT
 }
 
 function init() {
@@ -103,7 +112,7 @@ function drawTileSet(tiles) {
   // Adjust canvas size to number of tiles.
   canvas.height = tiles.length / TILESET_WIDTH * CHR_HEIGHT
 
-  let ctx = canvas.getContext('2d', {alpha: false})
+  let ctx = getContext2DNA(canvas)
 
   imgData = ctx.createImageData(canvas.width, canvas.height)
 
@@ -132,22 +141,22 @@ function onRomCanvasClick(mouseEvent) {
   const tileY = mouseEvent.offsetY >> 3  // Divide by 8
   const tileIndex = (tileY * TILESET_WIDTH) + tileX
 
-  drawEditorCanvas(tileX, tileY)
+  drawEditorCanvas(_tileSet[tileIndex])
 }
 
 /**
  * Draws a tile in the Editor window.
- * tileX/Y are tile coordinates.
  */
-function drawEditorCanvas(tileX, tileY) {
-  let canvas = document.getElementById('editorCanvas')
-
-  const romCanvas = document.getElementById('romCanvas')
+function drawEditorCanvas(tile) {
+  // Write pixels to offscreen unscaled canvas then drawImage to visible scaled canvas.
 
   // getContext with {alpha: false} is important here because we re-draw over the old tile.
-  let ctx = canvas.getContext('2d', {alpha: false})
+  let ctx = getContext2DNA(_editorUnscaledCanvas)
+  imgData = ctx.createImageData(CHR_WIDTH, CHR_HEIGHT)
+  writeImageData(imgData, tile, 0, 0)
+  ctx.putImageData(imgData, 0, 0)
 
-  ctx.drawImage(romCanvas,
-    tileX*CHR_WIDTH, tileY*CHR_HEIGHT, CHR_WIDTH, CHR_HEIGHT,
-    0, 0, CHR_WIDTH, CHR_HEIGHT)
+  let canvas = document.getElementById('editorCanvas')
+  let ctx2 = getContext2DNA(canvas)
+  ctx2.drawImage(_editorUnscaledCanvas, 0, 0)
 }
