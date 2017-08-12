@@ -16,12 +16,41 @@ const EDITOR_SCALE = 16
 let _tileSet = null
 
 /**
+ * Initialize functions.
+ */
+
+function initRomCanvas() {
+  let canvas = document.getElementById('romCanvas')
+  canvas.addEventListener('click', onRomCanvasClick)
+}
+
+function initEditorCanvas() {
+  let canvas = document.getElementById('editorCanvas')
+  // Resize the canvas.
+  canvas.width = EDITOR_SCALE * CHR_WIDTH
+  canvas.height = EDITOR_SCALE * CHR_HEIGHT
+
+  let ctx = canvas.getContext('2d', {alpha: false})
+  ctx.imageSmoothingEnabled = false
+  ctx.scale(EDITOR_SCALE, EDITOR_SCALE)
+
+  // Canvas is white by default.
+  ctx.fillStyle = 'black'
+  ctx.fillRect(0, 0, CHR_WIDTH, CHR_HEIGHT)
+}
+
+function init() {
+  initRomCanvas()
+  initEditorCanvas()
+}
+init()
+
+/**
  * Called when a ROM is loaded.
  * rom  NES ROM object.
  */
 ipcRenderer.on('rom-loaded', (event, rom) => {
   _tileSet = nesChr.deinterlaceTileSet(rom.rom_no_header)
-  init()
   drawTileSet(_tileSet)
 })
 
@@ -106,26 +135,6 @@ function onRomCanvasClick(mouseEvent) {
   drawEditorCanvas(tileX, tileY)
 }
 
-function initRomCanvas() {
-  let canvas = document.getElementById('romCanvas')
-  canvas.addEventListener('click', onRomCanvasClick)
-}
-
-function initEditorCanvas() {
-  let canvas = document.getElementById('editorCanvas')
-  // Resize the canvas.
-  canvas.width = EDITOR_SCALE * CHR_WIDTH
-  canvas.height = EDITOR_SCALE * CHR_HEIGHT
-
-  let ctx = canvas.getContext('2d', {alpha: false})
-  ctx.imageSmoothingEnabled = false
-  ctx.scale(EDITOR_SCALE, EDITOR_SCALE)
-
-  // Canvas is white by default.
-  ctx.fillStyle = 'black'
-  ctx.fillRect(0, 0, CHR_WIDTH, CHR_HEIGHT)
-}
-
 /**
  * Draws a tile in the Editor window.
  * tileX/Y are tile coordinates.
@@ -141,10 +150,4 @@ function drawEditorCanvas(tileX, tileY) {
   ctx.drawImage(romCanvas,
     tileX*CHR_WIDTH, tileY*CHR_HEIGHT, CHR_WIDTH, CHR_HEIGHT,
     0, 0, CHR_WIDTH, CHR_HEIGHT)
-}
-
-// TODO:  Move init code.  Separate ROM load stuff from real init stuff.  Real init stuff should only happen once.
-function init() {
-  initRomCanvas()
-  initEditorCanvas()
 }
