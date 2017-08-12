@@ -3,6 +3,8 @@
 // All of the Node.js APIs are available in this process.
 
 const {ipcRenderer} = require('electron')
+const nesRom = require('./nesRom.js')
+const nesChr = require('./nesPatternTable.js')
 
 const CHR_WIDTH = 8
 const CHR_HEIGHT = 8
@@ -13,37 +15,14 @@ const EDITOR_SCALE = 16
 
 let _tileSet = null
 
-// Not used.
-function drawGrayscaleBytes(canvas, rom) {
-  let ctx = canvas.getContext('2d', {alpha: false})
-
-  let id = ctx.createImageData(canvas.width, canvas.height)
-  for (let i = 0; i < rom.length; ++i) {
-    let di = i * RGBA_LEN
-    id.data[di++] = rom[i]
-    id.data[di++] = rom[i]
-    id.data[di++] = rom[i]
-    id.data[di++] = 255
-  }
-  ctx.putImageData(id, 0, 0)
-}
-
-// Not used.
-function drawRom(rom) {
-  let canvas = document.getElementById('romCanvas')
-  // Resize the height of the canvas based on the size of the rom.
-  canvas.height = rom.length / canvas.width
-
-  drawGrayscaleBytes(canvas, rom)
-}
-
 /**
  * Called when a ROM is loaded.
- * rom  Buffer containing rom data.
+ * rom  NES ROM object.
  */
-// Not used.
 ipcRenderer.on('rom-loaded', (event, rom) => {
-  drawRom(rom)
+  _tileSet = nesChr.deinterlaceTileSet(rom.rom_no_header)
+  init()
+  drawTileSet(_tileSet)
 })
 
 /**
@@ -107,16 +86,6 @@ function drawTileSet(tiles) {
 }
 
 /**
- * Called when the tileset is loaded.
- * tileSet  Array of tiles.  Tiles are 8*8 ArrayBuffers.
- */
-ipcRenderer.on('tileSet-loaded', (event, tileSet) => {
-  _tileSet = tileSet
-  init()
-  drawTileSet(tileSet)
-})
-
-/**
  * Not used but keeping for debugging.
  */
 function drawGreenBox(canvas, x, y) {
@@ -151,6 +120,10 @@ function initEditorCanvas() {
   let ctx = canvas.getContext('2d', {alpha: false})
   ctx.imageSmoothingEnabled = false
   ctx.scale(EDITOR_SCALE, EDITOR_SCALE)
+
+  // Canvas is white by default.
+  ctx.fillStyle = 'black'
+  ctx.fillRect(0, 0, CHR_WIDTH, CHR_HEIGHT)
 }
 
 /**
@@ -170,6 +143,7 @@ function drawEditorCanvas(tileX, tileY) {
     0, 0, CHR_WIDTH, CHR_HEIGHT)
 }
 
+// TODO:  Move init code.  Separate ROM load stuff from real init stuff.  Real init stuff should only happen once.
 function init() {
   initRomCanvas()
   initEditorCanvas()
