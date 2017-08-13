@@ -2,9 +2,6 @@ In Edge view, click on pixel to change color
 Refect the above change on tilemap
 Save rom
 Undo
-Refactor all the things!
-  Load ROM from main.js to renderer
-  Separate files for romView and editorView
 Choose a ROM via menu option.
 Revamp UI
 Nicer readme
