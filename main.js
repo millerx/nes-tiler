@@ -7,7 +7,6 @@ const path = require('path')
 const url = require('url')
 
 const nesRom = require('./nesRom.js')
-const nesChr = require('./nesPatternTable.js')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -43,10 +42,7 @@ function createWindow () {
   mainWindow.webContents.on('did-finish-load', () => {
     // Load an NES ROM.
     const rom = nesRom.readRom('BlasterMaster.nes')
-    //mainWindow.webContents.send('rom-loaded', rom.rom_no_header)
-
-    const tileSet = nesChr.deinterlaceTileSet(rom.rom_no_header)
-    mainWindow.webContents.send('tileSet-loaded', tileSet)
+    mainWindow.webContents.send('rom-loaded', rom)
   })
 
   // Emitted when the window is closed.

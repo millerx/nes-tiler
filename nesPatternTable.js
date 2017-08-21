@@ -15,12 +15,12 @@ exports.CHR_BYTE_SIZE = 16  // Bytes in an interlaced tile.
  * http://wiki.nesdev.com/w/index.php/PPU_pattern_tables
  */
 exports.deinterlaceTile = function(bytes) {
-  var tile = new Uint8Array(8*8)
+  let tile = new Uint8Array(8*8)
 
   // First interlaced byte
   // Put each bit in into it's own tile byte.
-  for (var y = 0; y < 8; ++y) {
-    for (var x = 0; x < 8; ++x) {
+  for (let y = 0; y < 8; ++y) {
+    for (let x = 0; x < 8; ++x) {
       tile[(y*8)+x] |= 0x01 & (bytes[y] >> (7-x))
     }
   }
@@ -28,8 +28,8 @@ exports.deinterlaceTile = function(bytes) {
   // Second interlaced byte
   // OR each bit into bit 1 slot in the tile.
   bytes = bytes.slice(8)
-  for (var y = 0; y < 8; ++y) {
-    for (var x = 0; x < 7; ++x) {
+  for (let y = 0; y < 8; ++y) {
+    for (let x = 0; x < 7; ++x) {
       tile[(y*8)+x] |= 0x02 & (bytes[y] >> (6-x))
     }
     // For the last bit we cannot shift right -1 so we shift left 1
@@ -47,29 +47,18 @@ exports.deinterlaceTile = function(bytes) {
  * http://wiki.nesdev.com/w/index.php/PPU_pattern_tables
  */
 exports.interlaceTile = function(colorValues) {
-  var tile = new Uint8Array(16)
+  let tile = new Uint8Array(16)
 
-  for (var y = 0; y < 8; ++y) {
-    for (var i = 0; i < 8; ++i) {
+  for (let y = 0; y < 8; ++y) {
+    for (let i = 0; i < 8; ++i) {
       tile[y] |= (colorValues[y*8+i] & 1) << (7-i)
     }
 
-    for (var i = 0; i < 7; ++i) {
+    for (let i = 0; i < 7; ++i) {
       tile[y+8] |= (colorValues[y*8+i] & 2) << (6-i)  // since the value is at 2nd bit we need to shift one less.
     }
     tile[y+8] |= (colorValues[y*8+7] & 2) >> 1 // special case for right-most pixel.  Left shift 1.    
   }
 
   return tile
-}
-
-/**
- * Deinterlaces all tiles in the given data set.
- */
-exports.deinterlaceTileSet = function(bytes) {
-  var tileSet = []
-  for (var i = 0; i < bytes.length; i += exports.CHR_BYTE_SIZE) {
-    tileSet.push(exports.deinterlaceTile(bytes.slice(i, i+exports.CHR_BYTE_SIZE)))
-  }
-  return tileSet
 }
