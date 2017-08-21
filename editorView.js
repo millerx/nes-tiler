@@ -24,6 +24,8 @@ function initEditorCanvas() {
   // Canvas is white by default.
   ctx.fillStyle = 'black'
   ctx.fillRect(0, 0, CHR_WIDTH, CHR_HEIGHT)
+
+  canvas.addEventListener('click', onClick)
 }
 
 function createUnscaledCanvas() {
@@ -55,7 +57,23 @@ exports.drawEditorCanvas = function(tileBytes) {
   ctx.putImageData(imgData, 0, 0)
 
   // Draw off-screen canvas to the scaled on-screen canvas.
-  let canvas = document.getElementById('editorCanvas')
+  const canvas = document.getElementById('editorCanvas')
   let ctx2 = cmn.getContext2DNA(canvas)
   ctx2.drawImage(_unscaledCanvas, 0, 0)
+}
+
+function onClick(mouseEvent) {
+  // Mouse coordinates are in pixels after the scale.
+
+  // Get coordinates of the scaled pixel.
+  const x = mouseEvent.offsetX - (mouseEvent.offsetX % EDITOR_SCALE)
+  const y = mouseEvent.offsetY - (mouseEvent.offsetY % EDITOR_SCALE)
+
+  // Do a 1x1 fillRect direclty on the scaled canvas.
+  const ux = ~~(x / EDITOR_SCALE)
+  const uy = ~~(y / EDITOR_SCALE)
+  const canvas = document.getElementById('editorCanvas')
+  let ctx = cmn.getContext2DNA(canvas)
+  ctx.fillStyle = 'yellow'
+  ctx.fillRect(ux, uy, 1, 1)
 }

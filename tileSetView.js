@@ -15,7 +15,7 @@ let _onSelectedFn = null
  */
 exports.init = function() {
   let canvas = document.getElementById('tileSetCanvas')
-  canvas.addEventListener('click', onTileSetCanvasClick)
+  canvas.addEventListener('click', onClick)
 }
 
 /**
@@ -72,7 +72,7 @@ exports.onSelected = function(fn) {
 /**
  * Look up selected tile and call the onSelected function.
  */
-function onTileSetCanvasClick(mouseEvent) {
+function onClick(mouseEvent) {
   if (!_onSelectedFn) return
 
   // pixelXY = mouseEvent.offset*
