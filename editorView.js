@@ -1,6 +1,7 @@
 // Code for the editorView that allows editing of a tile.
 
 const cmn = require('./common.js')
+const nesChr = require('./nesPatternTable.js')
 const {CHR_WIDTH, CHR_HEIGHT} = require('./nesPatternTable.js')
 
 const EDITOR_SCALE = 16
@@ -43,7 +44,9 @@ exports.init = function() {
 /**
  * Draws a tile in the Editor window.
  */
-exports.drawEditorCanvas = function(tile) {
+exports.drawEditorCanvas = function(tileBytes) {
+  const tile = nesChr.deinterlaceTile(tileBytes)
+
   // Write pixels to the off-screen unscaled canvas.
   // getContext with {alpha: false} is important here because we re-draw over the old tile.
   let ctx = cmn.getContext2DNA(_unscaledCanvas)

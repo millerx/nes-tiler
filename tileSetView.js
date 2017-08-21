@@ -1,9 +1,9 @@
 // Code for the tileSetView that displays all tiles in a ROM.
 
 const {ipcRenderer} = require('electron')
+const cmn = require('./common.js')
 const nesChr = require('./nesPatternTable.js')
 const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js')
-const cmn = require('./common.js')
 
 const TILESET_WIDTH = 40  // Tiles to draw on a single row.
 
@@ -85,6 +85,5 @@ function onTileSetCanvasClick(mouseEvent) {
   const romIndex = tileIndex * CHR_BYTE_SIZE
 
   const tileBytes = _rom.rom_no_header.slice(romIndex, romIndex + CHR_BYTE_SIZE)
-  const tile = nesChr.deinterlaceTile(tileBytes)
-  _onSelectedFn(tile)
+  _onSelectedFn(tileBytes)
 }

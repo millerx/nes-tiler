@@ -13,6 +13,6 @@ function init() {
   tileSetView.init()
   editorView.init()
 
-  tileSetView.onSelected(tile => {editorView.drawEditorCanvas(tile)})
+  tileSetView.onSelected(tileBytes => {editorView.drawEditorCanvas(tileBytes)})
 }
 init()
