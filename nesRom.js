@@ -32,7 +32,7 @@ const INesConsts = {
  * }
  */
 function readINesHeader(buffer) {
-  var i = 0
+  let i = 0
   // An iNES header starts with NES^Z (4e 45 53 1a)
   if (buffer[i++] === 0x4e &&
       buffer[i++] === 0x45 &&

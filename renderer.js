@@ -3,7 +3,6 @@
 // All of the Node.js APIs are available in this process.
 
 const {ipcRenderer} = require('electron')
-const nesChr = require('./nesPatternTable.js')
 const tileSetView = require('./tileSetView.js')
 const editorView = require('./editorView.js')
 
@@ -17,12 +16,3 @@ function init() {
   tileSetView.onSelected(tile => {editorView.drawEditorCanvas(tile)})
 }
 init()
-
-/**
- * Called when a ROM is loaded.
- * rom  NES ROM object.
- */
-ipcRenderer.on('rom-loaded', (event, rom) => {
-  _tileSet = nesChr.deinterlaceTileSet(rom.rom_no_header)
-  tileSetView.drawTileSet(_tileSet)
-})
