@@ -7,7 +7,7 @@ const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js')
 
 const TILESET_WIDTH = 40  // Tiles to draw on a single row.
 
-let _rom = null
+let _tileSetBytes = null
 let _onSelectedFn = null
 
 /**
@@ -20,32 +20,24 @@ exports.init = function() {
 }
 
 /**
- * Called when a ROM is loaded.
- * rom  NES ROM object.
+ * Loads and displays the given tileset.
  */
-ipcRenderer.on('rom-loaded', (event, rom) => {
-  _rom = rom
-  drawTileSet(rom.rom_no_header)
-})
-
-/**
- * Draws the given tileset.
- */
-function drawTileSet(romNoHeader) {
+exports.loadTileSet = function(tileSetBytes) {
+  _tileSetBytes = tileSetBytes
   let canvas = document.getElementById('tileSetCanvas')
 
   // Adjust canvas size to number of tiles.
-  const tileCount = ~~(romNoHeader.length / CHR_BYTE_SIZE)
+  const tileCount = ~~(tileSetBytes.length / CHR_BYTE_SIZE)
   canvas.height = (tileCount / TILESET_WIDTH) * CHR_HEIGHT
 
   let ctx = cmn.getContext2DNA(canvas)
 
   const imgData = ctx.createImageData(canvas.width, canvas.height)
 
-  // TODO: What if ROM size is not evenly divisible by CHR_BYTE_SIZE
+  // TODO: What if tileSetBytes.length is not evenly divisible by CHR_BYTE_SIZE
   let ti = 0  // tileIndex
-  for (let i = 0; i < romNoHeader.length; i += CHR_BYTE_SIZE) {
-    const tileBytes = romNoHeader.slice(i, i+CHR_BYTE_SIZE)
+  for (let i = 0; i < tileSetBytes.length; i += CHR_BYTE_SIZE) {
+    const tileBytes = tileSetBytes.slice(i, i+CHR_BYTE_SIZE)
     const tile = nesChr.deinterlaceTile(tileBytes)
     cmn.writeImageData(imgData, tile, (ti % TILESET_WIDTH), ~~(ti / TILESET_WIDTH))
     ++ti
@@ -83,8 +75,8 @@ function onClick(mouseEvent) {
   const tileX = mouseEvent.offsetX >> 3  // Divide by 8
   const tileY = mouseEvent.offsetY >> 3  // Divide by 8
   const tileIndex = (tileY * TILESET_WIDTH) + tileX
-  const romIndex = tileIndex * CHR_BYTE_SIZE
+  const byteIndex = tileIndex * CHR_BYTE_SIZE
 
-  const tileBytes = _rom.rom_no_header.slice(romIndex, romIndex + CHR_BYTE_SIZE)
+  const tileBytes = _tileSetBytes.slice(byteIndex, byteIndex + CHR_BYTE_SIZE)
   _onSelectedFn(tileBytes)
 }
