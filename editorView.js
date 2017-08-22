@@ -69,10 +69,10 @@ exports.drawEditorCanvas = function(tileBytes) {
 /**
  * Draws a pixel on scaled canvas given unscaled coordinates.
  */
-function drawPixel(ux, uy) {
+function drawPixel(ux, uy, palNum) {
   const canvas = document.getElementById('editorCanvas')
   let ctx = cmn.getContext2DNA(canvas)
-  ctx.fillStyle = cmn.toCSSColorStr(cmn.palette[1])
+  ctx.fillStyle = cmn.toCSSColorStr(cmn.palette[palNum])
   ctx.fillRect(ux, uy, 1, 1)
 }
 
@@ -89,5 +89,5 @@ function onMouseMove(mouseEvent) {
   const ux = ~~(x / EDITOR_SCALE)
   const uy = ~~(y / EDITOR_SCALE)
   // TODO: Track pixel values, only draw if the pixel value is different.
-  drawPixel(ux, uy)
+  drawPixel(ux, uy, mouseEvent.altKey ? 0 : 1)
 }
