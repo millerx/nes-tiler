@@ -15,6 +15,7 @@ let _onSelectedFn = null
  */
 exports.init = function() {
   let canvas = document.getElementById('tileSetCanvas')
+  canvas.width = TILESET_WIDTH * CHR_WIDTH  // 320
   canvas.addEventListener('click', onClick)
 }
 

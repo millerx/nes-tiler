@@ -1,12 +1,12 @@
-In Edge view, click on pixel to change color
-Refect the above change on tilemap
 Save rom
-Undo
 Choose a ROM via menu option.
+Undo
+Palette selector - change color
+Palette selector - change palette colors
+Implement Tile Layout View
+Refect editor above change on tilemap
+Refelct palette change on all windows in real time
 Revamp UI
 Nicer readme
-Implement Tile Layout View
 Choose a ROM by dragging it onto a start screen.
 Support right-click erase on Windows/Linux
-
-BUG: One can click left of the editor view and different tile is selected?
