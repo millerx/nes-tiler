@@ -1,4 +1,7 @@
 Save rom
+  On Cmd+S save rom
+  Reflect editor changes back onto rom
+  Only save ROM if it is "dirty"
 Choose a ROM via menu option.
 Undo
 Palette selector - change color
