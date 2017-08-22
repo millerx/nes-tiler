@@ -74,6 +74,6 @@ function onClick(mouseEvent) {
   const uy = ~~(y / EDITOR_SCALE)
   const canvas = document.getElementById('editorCanvas')
   let ctx = cmn.getContext2DNA(canvas)
-  ctx.fillStyle = 'yellow'
+  ctx.fillStyle = cmn.toCSSColorStr(cmn.palette[1])
   ctx.fillRect(ux, uy, 1, 1)
 }
