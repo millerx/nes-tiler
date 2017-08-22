@@ -7,6 +7,7 @@ const {CHR_WIDTH, CHR_HEIGHT} = require('./nesPatternTable.js')
 const EDITOR_SCALE = 16
 
 let _unscaledCanvas = null  // Offscreen canvas.
+let _mouseDown = false
 
 /**
  * Initialize visible canvas.
@@ -25,7 +26,10 @@ function initEditorCanvas() {
   ctx.fillStyle = 'black'
   ctx.fillRect(0, 0, CHR_WIDTH, CHR_HEIGHT)
 
-  canvas.addEventListener('click', onClick)
+  canvas.addEventListener('mousedown', (me) => { _mouseDown = true; onMouseMove(me); })
+  canvas.addEventListener('mousemove', onMouseMove)
+  canvas.addEventListener('mouseup', (me) => { _mouseDown = false })
+  canvas.addEventListener('mouseleave', (me) => { _mouseDown = false })
 }
 
 function createUnscaledCanvas() {
@@ -62,7 +66,19 @@ exports.drawEditorCanvas = function(tileBytes) {
   ctx2.drawImage(_unscaledCanvas, 0, 0)
 }
 
-function onClick(mouseEvent) {
+/**
+ * Draws a pixel on scaled canvas given unscaled coordinates.
+ */
+function drawPixel(ux, uy) {
+  const canvas = document.getElementById('editorCanvas')
+  let ctx = cmn.getContext2DNA(canvas)
+  ctx.fillStyle = cmn.toCSSColorStr(cmn.palette[1])
+  ctx.fillRect(ux, uy, 1, 1)
+}
+
+function onMouseMove(mouseEvent) {
+  if (!_mouseDown) return
+
   // Mouse coordinates are in pixels after the scale.
 
   // Get coordinates of the scaled pixel.
@@ -72,8 +88,6 @@ function onClick(mouseEvent) {
   // Do a 1x1 fillRect direclty on the scaled canvas.
   const ux = ~~(x / EDITOR_SCALE)
   const uy = ~~(y / EDITOR_SCALE)
-  const canvas = document.getElementById('editorCanvas')
-  let ctx = cmn.getContext2DNA(canvas)
-  ctx.fillStyle = cmn.toCSSColorStr(cmn.palette[1])
-  ctx.fillRect(ux, uy, 1, 1)
+  // TODO: Track pixel values, only draw if the pixel value is different.
+  drawPixel(ux, uy)
 }

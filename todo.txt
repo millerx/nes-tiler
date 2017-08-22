@@ -7,3 +7,5 @@ Revamp UI
 Nicer readme
 Implement Tile Layout View
 Choose a ROM by dragging it onto a start screen.
+
+BUG: One can click left of the editor view and different tile is selected?
