@@ -3,6 +3,7 @@
 // All of the Node.js APIs are available in this process.
 
 const {ipcRenderer} = require('electron')
+const {CHR_BYTE_SIZE} = require('./nesPatternTable.js')
 const tileSetView = require('./tileSetView.js')
 const editorView = require('./editorView.js')
 
@@ -33,5 +34,11 @@ ipcRenderer.on('rom-loaded', (event, rom) => {
  * to the main process on another "save" message.
  */
 ipcRenderer.on('save', (event) => {
+  const tileBytes = editorView.getTileBytes()
+  const tileIndex = tileSetView.getSelectedTileIndex()
+  const romOffset = tileIndex * CHR_BYTE_SIZE
+  // Write tileBytes onto the ROM starting at romOffset
+  _rom.rom_no_header.copy(romOffset, tileBytes)
+
   ipcRenderer.send('save', _rom)
 })

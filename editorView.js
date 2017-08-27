@@ -9,8 +9,8 @@ const {CHR_WIDTH, CHR_HEIGHT} = require('./nesPatternTable.js')
 const EDITOR_SCALE = 16
 
 let _unscaledCanvas = null  // Offscreen canvas.
-let _mouseDown = false
-let _tile = null
+let _mouseDown = false  // Is the mouse currently pressed down?
+let _tile = null  // Deinterlaced tile.
 
 /**
  * Initialize visible canvas.
@@ -108,4 +108,11 @@ function drawPixel(ux, uy, palNum) {
   let ctx = cmn.getContext2DNA(canvas)
   ctx.fillStyle = cmn.toCSSColorStr(cmn.palette[palNum])
   ctx.fillRect(ux, uy, 1, 1)
+}
+
+/**
+ * Returns interlaced tile bytes of the edited tile.
+ */
+exports.getTileBytes = function() {
+  return nesChr.interlaceTile(_tile)
 }
