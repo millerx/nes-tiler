@@ -7,7 +7,7 @@ const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js')
 
 const TILESET_WIDTH = 40  // Tiles to draw on a single row.
 
-let _tileSetBytes = null
+let _rom = null
 let _onSelectedFn = null
 
 /**
@@ -20,24 +20,25 @@ exports.init = function() {
 }
 
 /**
- * Loads and displays the given tileset.
+ * Loads and displays the tileset of the given ROM.
  */
-exports.loadTileSet = function(tileSetBytes) {
-  _tileSetBytes = tileSetBytes
+exports.loadTileSet = function(rom) {
+  _rom = rom
   let canvas = document.getElementById('tileSetCanvas')
 
   // Adjust canvas size to number of tiles.
-  const tileCount = ~~(tileSetBytes.length / CHR_BYTE_SIZE)
+  const tileCount = ~~((rom.buffer.length - rom.dataOffset) / CHR_BYTE_SIZE)
   canvas.height = (tileCount / TILESET_WIDTH) * CHR_HEIGHT
 
   let ctx = cmn.getContext2DNA(canvas)
 
   const imgData = ctx.createImageData(canvas.width, canvas.height)
 
-  // TODO: What if tileSetBytes.length is not evenly divisible by CHR_BYTE_SIZE
   let ti = 0  // tileIndex
-  for (let i = 0; i < tileSetBytes.length; i += CHR_BYTE_SIZE) {
-    const tileBytes = tileSetBytes.slice(i, i+CHR_BYTE_SIZE)
+  for (let i = _rom.dataOffset; i < _rom.buffer.length; i += CHR_BYTE_SIZE) {
+    // TODO: Remove the slice below by passing in an offset to deinterlaceTile and have it read no more then CHR_BYTE_SIZE
+    // TODO: Reuse the same tile buffer instead of creating one with every call to deinterlaceTile.
+    const tileBytes = _rom.buffer.slice(i, i+CHR_BYTE_SIZE)
     const tile = nesChr.deinterlaceTile(tileBytes)
     cmn.writeImageData(imgData, tile, (ti % TILESET_WIDTH), ~~(ti / TILESET_WIDTH))
     ++ti
@@ -75,8 +76,8 @@ function onClick(mouseEvent) {
   const tileX = mouseEvent.offsetX >> 3  // Divide by 8
   const tileY = mouseEvent.offsetY >> 3  // Divide by 8
   const tileIndex = (tileY * TILESET_WIDTH) + tileX
-  const byteIndex = tileIndex * CHR_BYTE_SIZE
+  const byteIndex = (tileIndex * CHR_BYTE_SIZE) + _rom.dataOffset
 
-  const tileBytes = _tileSetBytes.slice(byteIndex, byteIndex + CHR_BYTE_SIZE)
+  const tileBytes = _rom.buffer.slice(byteIndex, byteIndex + CHR_BYTE_SIZE)
   _onSelectedFn(tileBytes)
 }

@@ -4,6 +4,8 @@ Save rom
     Write back to ROM before Save
     Write back to when selecting a different tile
   Only save ROM if it is "dirty"
+Before open if you click on the different views it should not produce error.  Selecting Save should also not produce error
+TileSetView TODOs for loading optimizations
 Choose a ROM via menu option.
 Undo
 Palette selector - change color

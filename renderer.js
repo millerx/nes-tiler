@@ -26,7 +26,7 @@ init()
  */
 ipcRenderer.on('rom-loaded', (event, rom) => {
   _rom = rom
-  tileSetView.loadTileSet(rom.buffer)
+  tileSetView.loadTileSet(rom)
 })
 
 /**
@@ -36,7 +36,7 @@ ipcRenderer.on('rom-loaded', (event, rom) => {
 ipcRenderer.on('save', (event) => {
   const tileBytes = editorView.getTileBytes()
   const tileIndex = tileSetView.getSelectedTileIndex()
-  const romOffset = tileIndex * CHR_BYTE_SIZE
+  const romOffset = (tileIndex * CHR_BYTE_SIZE) + _rom.dataOffset
   // Write tileBytes onto the ROM starting at romOffset
   //_rom.buffer.copy(romOffset, tileBytes)
 
