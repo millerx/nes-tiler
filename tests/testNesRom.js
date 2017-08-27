@@ -30,7 +30,7 @@ const TEST_ROM = makeTestRom();
 // Test readRom()
 (function(){
   { // Basic functionality.
-    const testRom = nesRom.readRom(TEST_ROM)
+    const rom = nesRom.readRom(TEST_ROM)
     assert.dsequal({
       prgRomSize: 8,
       chrRomSize: 16,
@@ -40,18 +40,15 @@ const TEST_ROM = makeTestRom();
       flags9: 9,
       flags10: 10,
       mapper: 71
-    }, testRom.inesHeader)
-    assert.sequal(TEST_ROM, testRom.rom)
-    assert.dsequal(TEST_DATA, testRom.romNoHeader)
+    }, rom.inesHeader)
+    assert.sequal(TEST_ROM, rom.buffer)
+    assert.equal(16, rom.dataOffset)
   }
 
   { // ROM without iNES header.
-    const testRom = nesRom.readRom(TEST_DATA)
-    assert.sequal(null, testRom.inesHeader)
-    // Both .rom and .romNoHeader are the same value.
-    assert.dsequal(TEST_DATA, testRom.rom)
-    assert.dsequal(TEST_DATA, testRom.romNoHeader)
+    const rom = nesRom.readRom(TEST_DATA)
+    assert.sequal(null, rom.inesHeader)
+    assert.dsequal(TEST_DATA, rom.buffer)
+    assert.equal(0, rom.dataOffset)
   }
-
-  // TODO: Test read from file.
 })()
