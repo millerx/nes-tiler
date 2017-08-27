@@ -1,6 +1,8 @@
 Save rom
-  On Cmd+S save rom
+  -On Cmd+S save rom
   Reflect editor changes back onto rom
+    Write back to ROM before Save
+    Write back to when selecting a different tile
   Only save ROM if it is "dirty"
 Choose a ROM via menu option.
 Undo
@@ -13,3 +15,4 @@ Revamp UI
 Nicer readme
 Choose a ROM by dragging it onto a start screen.
 Support right-click erase on Windows/Linux
+Write only changes to ROM instead of rewriting the whole file

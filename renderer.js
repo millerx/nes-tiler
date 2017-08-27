@@ -27,3 +27,11 @@ ipcRenderer.on('rom-loaded', (event, rom) => {
   _rom = rom
   tileSetView.loadTileSet(rom.rom_no_header)
 })
+
+/**
+ * Called when the ROM needs to be saved.  Update the in-memory ROM stored here and send it
+ * to the main process on another "save" message.
+ */
+ipcRenderer.on('save', (event) => {
+  ipcRenderer.send('save', _rom)
+})

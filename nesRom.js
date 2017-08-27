@@ -66,8 +66,8 @@ function readINesHeader(buffer) {
  * }
  */
 exports.readRom = function(file) {
-  var buffer = fs.readFileSync(file)
-  var inesHeader = readINesHeader(buffer)
+  const buffer = fs.readFileSync(file)
+  const inesHeader = readINesHeader(buffer)
   return {
     inesHeader: inesHeader,
     rom: buffer,
