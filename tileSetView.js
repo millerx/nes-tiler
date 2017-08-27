@@ -8,6 +8,7 @@ const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js')
 const TILESET_WIDTH = 40  // Tiles to draw on a single row.
 
 let _rom = null
+let _selectedTileIndex = -1
 let _onSelectedFn = null
 
 /**
@@ -64,6 +65,13 @@ exports.onSelected = function(fn) {
 }
 
 /**
+ * Returns the tile index of the selected tile.  -1 if no tile has been selected.
+ */
+exports.getSelectedTileIndex = function() {
+  return _selectedTileIndex
+}
+
+/**
  * Look up selected tile and call the onSelected function.
  */
 function onClick(mouseEvent) {
@@ -75,8 +83,8 @@ function onClick(mouseEvent) {
 
   const tileX = mouseEvent.offsetX >> 3  // Divide by 8
   const tileY = mouseEvent.offsetY >> 3  // Divide by 8
-  const tileIndex = (tileY * TILESET_WIDTH) + tileX
-  const byteIndex = (tileIndex * CHR_BYTE_SIZE) + _rom.dataOffset
+  _selectedTileIndex = (tileY * TILESET_WIDTH) + tileX
+  const byteIndex = (_selectedTileIndex * CHR_BYTE_SIZE) + _rom.dataOffset
 
   const tileBytes = _rom.buffer.slice(byteIndex, byteIndex + CHR_BYTE_SIZE)
   _onSelectedFn(tileBytes)

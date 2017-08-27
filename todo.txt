@@ -3,6 +3,7 @@ Save rom
   Reflect editor changes back onto rom
     Write back to ROM before Save
     Write back to when selecting a different tile
+    Update tileView when a new tile is selected
   Only save ROM if it is "dirty"
 Before open if you click on the different views it should not produce error.  Selecting Save should also not produce error
 TileSetView TODOs for loading optimizations

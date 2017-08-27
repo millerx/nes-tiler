@@ -29,16 +29,21 @@ ipcRenderer.on('rom-loaded', (event, rom) => {
   tileSetView.loadTileSet(rom)
 })
 
+function writeTileBytesToRom(tileIndex, tileBytes) {
+  const romOffset = (tileIndex * CHR_BYTE_SIZE) + _rom.dataOffset
+  for (let i = 0; i < CHR_BYTE_SIZE; ++i) {
+    _rom.buffer[romOffset + i] = tileBytes[i]
+  }
+}
+
 /**
  * Called when the ROM needs to be saved.  Update the in-memory ROM stored here and send it
  * to the main process on another "save" message.
  */
 ipcRenderer.on('save', (event) => {
-  const tileBytes = editorView.getTileBytes()
   const tileIndex = tileSetView.getSelectedTileIndex()
-  const romOffset = (tileIndex * CHR_BYTE_SIZE) + _rom.dataOffset
-  // Write tileBytes onto the ROM starting at romOffset
-  //_rom.buffer.copy(romOffset, tileBytes)
+  const tileBytes = editorView.getTileBytes()
+  writeTileBytesToRom(tileIndex, tileBytes)
 
   ipcRenderer.send('save', _rom)
 })
