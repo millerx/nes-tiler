@@ -38,7 +38,7 @@ function readINesHeader(buffer) {
       buffer[i++] === 0x45 &&
       buffer[i++] === 0x53 &&
       buffer[i++] === 0x1a) {
-    var ines = {
+    let ines = {
       prgRomSize: buffer[i++],
       chrRomSize: buffer[i++],
       flags6: buffer[i++],
@@ -46,6 +46,7 @@ function readINesHeader(buffer) {
       prgRamSize: buffer[i++],
       flags9: buffer[i++],
       flags10: buffer[i++],
+      mapper: 0  // Populated below.
     }
     // flags6 bit 4-7 has the lower 4 bits of the mapper.
     // flags7 bit 4-7 has the higher 4 bits of the mapper.
@@ -62,16 +63,16 @@ function readINesHeader(buffer) {
  * Returns: {
  *   inesHeader: {},  // Object with iNES structure read from the file.  null if iNES header is not recogised.
  *   rom: Buffer      // Buffer containing the ROM including the iNES header.
- *   rom_no_header: Buffer  // Buffer containing the ROM excluding the iNES header. 
+ *   romNoHeader: Buffer  // Buffer containing the ROM excluding the iNES header. 
  * }
  */
 exports.readRom = function(file) {
-  const buffer = fs.readFileSync(file)
+  const buffer = (typeof(file) === 'string' ? fs.readFileSync(file) : file)
   const inesHeader = readINesHeader(buffer)
   return {
     inesHeader: inesHeader,
     rom: buffer,
     // slice() is a light weight operation.
-    rom_no_header: inesHeader ? buffer.slice(INesConsts.HEADER_SIZE) : buffer
+    romNoHeader: inesHeader ? buffer.slice(INesConsts.HEADER_SIZE) : buffer
   }
 }
