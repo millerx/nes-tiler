@@ -11,6 +11,7 @@ const EDITOR_SCALE = 16
 let _unscaledCanvas = null  // Offscreen canvas.
 let _mouseDown = false  // Is the mouse currently pressed down?
 let _tile = null  // Deinterlaced tile.
+let _onTileChangedFn  // fn(tileBytes) Function called when a tile has changed.
 
 /**
  * Initialize visible canvas.
@@ -48,6 +49,10 @@ function createUnscaledCanvas() {
 exports.init = function() {
   initEditorCanvas()
   _unscaledCanvas = createUnscaledCanvas()
+}
+
+exports.onTileChanged = function(fn) {
+  _onTileChangedFn = fn
 }
 
 /**
@@ -96,7 +101,13 @@ function onMouseMove(mouseEvent) {
  */
 function changePixel(ux, uy, palNum) {
   _tile[uy * CHR_WIDTH + ux] = palNum
+  
   drawPixel(ux, uy, palNum)
+
+  if (_onTileChangedFn) {
+    const tileBytes = nesChr.interlaceTile(_tile)
+    _onTileChangedFn(tileBytes)
+  }
 }
 
 /**
@@ -108,11 +119,4 @@ function drawPixel(ux, uy, palNum) {
   let ctx = cmn.getContext2DNA(canvas)
   ctx.fillStyle = cmn.toCSSColorStr(cmn.palette[palNum])
   ctx.fillRect(ux, uy, 1, 1)
-}
-
-/**
- * Returns interlaced tile bytes of the edited tile.
- */
-exports.getTileBytes = function() {
-  return nesChr.interlaceTile(_tile)
 }

@@ -7,9 +7,9 @@ const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js')
 
 const TILESET_WIDTH = 40  // Tiles to draw on a single row.
 
-let _rom = null
-let _selectedTileIndex = -1
-let _onSelectedFn = null
+let _rom = null  // ROM being viewed.
+let _selectedTileIndex = -1  // Index of selected tile.  -1 if no tile is selected.
+let _onSelectedFn = null  // fn(tileBytes)  Function called when a tile is selected.
 
 /**
  * Called by renderer.js to initialize.
@@ -65,13 +65,6 @@ exports.onSelected = function(fn) {
 }
 
 /**
- * Returns the tile index of the selected tile.  -1 if no tile has been selected.
- */
-exports.getSelectedTileIndex = function() {
-  return _selectedTileIndex
-}
-
-/**
  * Look up selected tile and call the onSelected function.
  */
 function onClick(mouseEvent) {
@@ -88,4 +81,30 @@ function onClick(mouseEvent) {
 
   const tileBytes = _rom.buffer.slice(byteIndex, byteIndex + CHR_BYTE_SIZE)
   _onSelectedFn(tileBytes)
+}
+
+exports.updateSelectedTileBytes = function(tileBytes) {
+  if (_selectedTileIndex < 0) {
+    console.log('WARN: updateSelectedTileBytes called with no tile selected.')
+    return
+  }
+  console.log('updateSelectedTileBytes')
+
+  redrawSelectedTile(tileBytes)
+
+  const byteIndex = (_selectedTileIndex * CHR_BYTE_SIZE) + _rom.dataOffset
+  cmn.copyIntoArray(_rom.buffer, byteIndex, tileBytes)
+}
+
+function redrawSelectedTile(tileBytes) {
+  let canvas = document.getElementById('tileSetCanvas')
+  let ctx = cmn.getContext2DNA(canvas)
+  const imgData = ctx.createImageData(CHR_WIDTH, CHR_HEIGHT)
+
+  const tile = nesChr.deinterlaceTile(tileBytes)
+  cmn.writeImageData(imgData, tile, 0, 0)
+
+  const x = (_selectedTileIndex % TILESET_WIDTH) * CHR_WIDTH
+  const y = ~~(_selectedTileIndex / TILESET_WIDTH) * CHR_HEIGHT
+  ctx.putImageData(imgData, x, y)
 }
