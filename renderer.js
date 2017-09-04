@@ -18,7 +18,7 @@ function init() {
 
   tileSetView.onSelected(editorView.editTile)
 
-  editorView.onTileChanged(tileSetView.updateSelectedTileBytes)
+  editorView.onTileChanged(tileSetView.updateTile)
 }
 init()
 
@@ -29,6 +29,7 @@ init()
 ipcRenderer.on('rom-loaded', (event, rom) => {
   _rom = rom
   tileSetView.loadTileSet(rom)
+  editorView.usingROM(rom)
 })
 
 /**

@@ -1,4 +1,4 @@
-const {CHR_WIDTH, CHR_HEIGHT, CHR_PIXEL_SIZE} = require('./nesPatternTable.js')
+const {CHR_WIDTH, CHR_HEIGHT, CHR_PIXEL_SIZE, CHR_BYTE_SIZE} = require('./nesPatternTable.js')
 
 const RGBA_LEN = 4
 
@@ -64,4 +64,13 @@ exports.copyIntoArray = function(targetArray, targetOffset, sourceArray, sourceO
     ++targetOffset
     ++sourceOffset
   }
+}
+
+exports.getByteIndexOfTile = function(rom, tileIndex) {
+  return (tileIndex * CHR_BYTE_SIZE) + rom.dataOffset
+}
+
+exports.sliceTileBytes = function(rom, tileIndex) {
+  const byteIndex = exports.getByteIndexOfTile(rom, tileIndex)
+  return rom.buffer.slice(byteIndex, byteIndex + CHR_BYTE_SIZE)
 }

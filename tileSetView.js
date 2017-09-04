@@ -77,31 +77,20 @@ function onClick(mouseEvent) {
   const tileX = mouseEvent.offsetX >> 3  // Divide by 8
   const tileY = mouseEvent.offsetY >> 3  // Divide by 8
   _selectedTileIndex = (tileY * TILESET_WIDTH) + tileX
-  const byteIndex = (_selectedTileIndex * CHR_BYTE_SIZE) + _rom.dataOffset
-
-  const tileBytes = _rom.buffer.slice(byteIndex, byteIndex + CHR_BYTE_SIZE)
-  _onSelectedFn(tileBytes)
+  _onSelectedFn(_selectedTileIndex)
 }
 
-exports.updateSelectedTileBytes = function(tileBytes) {
-  if (_selectedTileIndex < 0) {
-    console.log('WARN: updateSelectedTileBytes called with no tile selected.')
-    return
-  }
-  console.log('updateSelectedTileBytes')
-
-  redrawSelectedTile(tileBytes)
-
-  const byteIndex = (_selectedTileIndex * CHR_BYTE_SIZE) + _rom.dataOffset
-  cmn.copyIntoArray(_rom.buffer, byteIndex, tileBytes)
+exports.updateTile = function(tileIndex) {
+  const tileBytes = cmn.sliceTileBytes(_rom, tileIndex)
+  const tile = nesChr.deinterlaceTile(tileBytes)
+  drawTile(tile)
 }
 
-function redrawSelectedTile(tileBytes) {
+function drawTile(tile) {
   let canvas = document.getElementById('tileSetCanvas')
   let ctx = cmn.getContext2DNA(canvas)
   const imgData = ctx.createImageData(CHR_WIDTH, CHR_HEIGHT)
 
-  const tile = nesChr.deinterlaceTile(tileBytes)
   cmn.writeImageData(imgData, tile, 0, 0)
 
   const x = (_selectedTileIndex % TILESET_WIDTH) * CHR_WIDTH

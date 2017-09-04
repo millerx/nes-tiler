@@ -10,8 +10,18 @@ const EDITOR_SCALE = 16
 
 let _unscaledCanvas = null  // Offscreen canvas.
 let _mouseDown = false  // Is the mouse currently pressed down?
+let _rom = null  // ROM being edited.
+let _tileIndex = -1  // Index of tile being edited.
 let _tile = null  // Deinterlaced tile.
 let _onTileChangedFn  // fn(tileBytes) Function called when a tile has changed.
+
+/**
+ * Called by renderer.js to initialize.
+ */
+exports.init = function() {
+  initEditorCanvas()
+  _unscaledCanvas = createUnscaledCanvas()
+}
 
 /**
  * Initialize visible canvas.
@@ -43,29 +53,32 @@ function createUnscaledCanvas() {
   return canvas
 }
 
-/**
- * Called by renderer.js to initialize.
- */
-exports.init = function() {
-  initEditorCanvas()
-  _unscaledCanvas = createUnscaledCanvas()
-}
-
 exports.onTileChanged = function(fn) {
   _onTileChangedFn = fn
+}
+
+exports.usingROM = function(rom) {
+  _rom = rom
 }
 
 /**
  * Loads a tile into the Editor View.
  */
-exports.editTile = function(tileBytes) {
+exports.editTile = function(tileIndex) {
+  _tileIndex = tileIndex
+
+  const tileBytes = cmn.sliceTileBytes(_rom, tileIndex)
   _tile = nesChr.deinterlaceTile(tileBytes)
 
+  drawEditorView(_tile)
+}
+
+function drawEditorView(tile) {
   // Write pixels to the off-screen unscaled canvas.
   // getContext with {alpha: false} is important here because we re-draw over the old tile.
   let ctx = cmn.getContext2DNA(_unscaledCanvas)
   let imgData = ctx.createImageData(CHR_WIDTH, CHR_HEIGHT)
-  cmn.writeImageData(imgData, _tile, 0, 0)
+  cmn.writeImageData(imgData, tile, 0, 0)
   ctx.putImageData(imgData, 0, 0)
 
   // Draw off-screen canvas to the scaled on-screen canvas.
@@ -101,12 +114,15 @@ function onMouseMove(mouseEvent) {
  */
 function changePixel(ux, uy, palNum) {
   _tile[uy * CHR_WIDTH + ux] = palNum
-  
+
+  const tileBytes = nesChr.interlaceTile(_tile)
+  const byteIndex = cmn.getByteIndexOfTile(_rom, _tileIndex)
+  cmn.copyIntoArray(_rom.buffer, byteIndex, tileBytes)
+
   drawPixel(ux, uy, palNum)
 
   if (_onTileChangedFn) {
-    const tileBytes = nesChr.interlaceTile(_tile)
-    _onTileChangedFn(tileBytes)
+    _onTileChangedFn(_tileIndex)
   }
 }
 

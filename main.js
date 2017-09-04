@@ -10,7 +10,7 @@ const menu = require('./menu.js')
 let mainWindow
 
 // Name of the file that is currently open.
-let openFileName = null
+let _openFileName = null
 
 function createWindow () {
   // Create the browser window.
@@ -68,9 +68,10 @@ app.on('activate', () => {
  */
 menu.setOpenFn(() => {
   // TODO: Open File dialog
-  openFileName = './BlasterMaster.nes'
+  _openFileName = './BlasterMaster.nes'
 
-  const rom = nesRom.readRom(fs.readFileSync(openFileName))
+  console.log('Loading ROM '+_openFileName)
+  const rom = nesRom.readRom(fs.readFileSync(_openFileName))
   mainWindow.webContents.send('rom-loaded', rom)
 })
 
@@ -86,6 +87,6 @@ menu.setSaveFn(() => {
  * Message with ROM contents to save to disk.
  */
 ipcMain.on('save', (event, rom) => {
-  fs.writeFileSync(openFileName, rom.buffer)
-  console.log('Saved ROM '+openFileName)
+  fs.writeFileSync(_openFileName, rom.buffer)
+  console.log('Saved ROM '+_openFileName)
 })
