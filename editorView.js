@@ -12,9 +12,9 @@ let _unscaledCanvas  // Offscreen canvas.
 let _mouseDown = false  // Is the mouse currently pressed down?
 let _rom  // ROM being edited.
 let _tileIndex = -1  // Index of tile being edited.
-let _tile  // Deinterlaced tile.
-let _onTileChangedFn  // fn(tileBytes) Function called when a tile has changed.
+let _tile = null  // Deinterlaced tile.
 let _isROMDirty = false  // True if the ROM has been updated since last save.
+let _onTileChangedFn  // fn(tileBytes) Function called when a tile has changed.
 
 /**
  * Called by renderer.js to initialize.
@@ -58,8 +58,15 @@ exports.onTileChanged = function(fn) {
   _onTileChangedFn = fn
 }
 
-exports.usingROM = function(rom) {
+exports.loadROM = function(rom) {
   _rom = rom
+  // Reset in case this is not the first ROM we have loaded.
+  _tileIndex = -1
+  _tile = null
+  _isROMDirty = false
+
+  // Clear the canvas in case this is not the first ROM we have loaded.
+  clearEditorView()
 }
 
 exports.isROMDirty = function() {
@@ -80,6 +87,14 @@ exports.editTile = function(tileIndex) {
   _tile = nesChr.deinterlaceTile(tileBytes)
 
   drawEditorView(_tile)
+}
+
+function clearEditorView() {
+  // Draw off-screen canvas to the scaled on-screen canvas.
+  const canvas = document.getElementById('editorCanvas')
+  let ctx = cmn.getContext2DNA(canvas)
+  ctx.fillStyle = 'black'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
 }
 
 function drawEditorView(tile) {

@@ -28,8 +28,8 @@ init()
  */
 ipcRenderer.on('rom-loaded', (event, rom) => {
   _rom = rom
-  tileSetView.loadTileSet(rom)
-  editorView.usingROM(rom)
+  tileSetView.loadROM(rom)
+  editorView.loadROM(rom)
 })
 
 /**

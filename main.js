@@ -1,4 +1,4 @@
-const {app, BrowserWindow, ipcMain} = require('electron')
+const {app, BrowserWindow, ipcMain, dialog} = require('electron')
 const fs = require('fs')
 const path = require('path')
 const url = require('url')
@@ -67,13 +67,25 @@ app.on('activate', () => {
  * Opens dialog to select a ROM, loads that ROM into memory and sends that to the render thread.
  */
 menu.setOpenFn(() => {
-  // TODO: Open File dialog
-  _openFileName = './BlasterMaster.nes'
+  // TODO: Prompt if ROM is dirty.
+
+  const selectedFiles = showOpenDialog()
+  if (!selectedFiles) return
+  _openFileName = selectedFiles[0]
 
   console.log('Loading ROM '+_openFileName)
   const rom = nesRom.readRom(fs.readFileSync(_openFileName))
   mainWindow.webContents.send('rom-loaded', rom)
 })
+
+function showOpenDialog() {
+  return dialog.showOpenDialog(mainWindow, {
+    filters: [
+      {name: 'NES ROMs', extensions: ['nes']},
+      {name: 'All Files', extensions: ['*']}
+    ]
+  })
+}
 
 /**
  * Send a message to renderer to "save" which updates in-memory ROM and sends that
@@ -87,6 +99,7 @@ menu.setSaveFn(() => {
  * Message with ROM contents to save to disk.
  */
 ipcMain.on('save', (event, rom) => {
+  // TODO: Implement Save-As
   fs.writeFileSync(_openFileName, rom.buffer)
   console.log('Saved ROM '+_openFileName)
   mainWindow.webContents.send('saveComplete')

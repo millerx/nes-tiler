@@ -23,8 +23,10 @@ exports.init = function() {
 /**
  * Loads and displays the tileset of the given ROM.
  */
-exports.loadTileSet = function(rom) {
+exports.loadROM = function(rom) {
   _rom = rom
+  _selectedTileIndex = -1  // Reset in case this is not the first ROM we have opened.
+
   let canvas = document.getElementById('tileSetCanvas')
 
   // Adjust canvas size to number of tiles.
@@ -53,7 +55,7 @@ exports.loadTileSet = function(rom) {
  */
 function drawGreenBox(canvas, x, y) {
   let ctx = canvas.getContext('2d')
-  ctx.fillStyle = "rgba(0, 255, 0, 0.5)"
+  ctx.fillStyle = 'rgba(0, 255, 0, 0.5)'
   ctx.fillRect(x, y, 8, 8)
 }
 
