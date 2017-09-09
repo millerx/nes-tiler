@@ -7,9 +7,9 @@ const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js')
 
 const TILESET_WIDTH = 40  // Tiles to draw on a single row.
 
-let _rom = null  // ROM being viewed.
+let _rom  // ROM being viewed.
 let _selectedTileIndex = -1  // Index of selected tile.  -1 if no tile is selected.
-let _onSelectedFn = null  // fn(tileBytes)  Function called when a tile is selected.
+let _onSelectedFn  // fn(tileBytes)  Function called when a tile is selected.
 
 /**
  * Called by renderer.js to initialize.
@@ -69,6 +69,7 @@ exports.onSelected = function(fn) {
  */
 function onClick(mouseEvent) {
   if (!_onSelectedFn) return
+  if (!_rom) return
 
   // pixelXY = mouseEvent.offset*
   // tileXY = mouseEvent.offset* >> 3 // Div 8

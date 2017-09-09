@@ -89,4 +89,5 @@ menu.setSaveFn(() => {
 ipcMain.on('save', (event, rom) => {
   fs.writeFileSync(_openFileName, rom.buffer)
   console.log('Saved ROM '+_openFileName)
+  mainWindow.webContents.send('saveComplete')
 })

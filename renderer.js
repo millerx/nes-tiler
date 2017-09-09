@@ -37,6 +37,12 @@ ipcRenderer.on('rom-loaded', (event, rom) => {
  * to the main process on another "save" message.
  */
 ipcRenderer.on('save', (event) => {
-  console.log('Saving ROM.')
-  ipcRenderer.send('save', _rom)
+  if (editorView.isROMDirty()) {
+    console.log('Saving ROM.')
+    ipcRenderer.send('save', _rom)
+  }
+})
+
+ipcRenderer.on('saveComplete', (event) => {
+  editorView.clearROMDirty()
 })

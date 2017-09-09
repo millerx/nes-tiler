@@ -8,12 +8,13 @@ const {CHR_WIDTH, CHR_HEIGHT} = require('./nesPatternTable.js')
 
 const EDITOR_SCALE = 16
 
-let _unscaledCanvas = null  // Offscreen canvas.
+let _unscaledCanvas  // Offscreen canvas.
 let _mouseDown = false  // Is the mouse currently pressed down?
-let _rom = null  // ROM being edited.
+let _rom  // ROM being edited.
 let _tileIndex = -1  // Index of tile being edited.
-let _tile = null  // Deinterlaced tile.
+let _tile  // Deinterlaced tile.
 let _onTileChangedFn  // fn(tileBytes) Function called when a tile has changed.
+let _isROMDirty = false  // True if the ROM has been updated since last save.
 
 /**
  * Called by renderer.js to initialize.
@@ -61,6 +62,14 @@ exports.usingROM = function(rom) {
   _rom = rom
 }
 
+exports.isROMDirty = function() {
+  return _isROMDirty
+}
+
+exports.clearROMDirty = function() {
+  _isROMDirty = false
+}
+
 /**
  * Loads a tile into the Editor View.
  */
@@ -89,6 +98,7 @@ function drawEditorView(tile) {
 
 function onMouseMove(mouseEvent) {
   if (!_mouseDown) return
+  if (!_rom) return
 
   // Mouse coordinates are in screen coordinates.
 
@@ -118,6 +128,7 @@ function changePixel(ux, uy, palNum) {
   const tileBytes = nesChr.interlaceTile(_tile)
   const byteIndex = cmn.getByteIndexOfTile(_rom, _tileIndex)
   cmn.copyIntoArray(_rom.buffer, byteIndex, tileBytes)
+  _isROMDirty = true
 
   drawPixel(ux, uy, palNum)
 
