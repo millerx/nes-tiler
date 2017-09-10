@@ -63,12 +63,7 @@ app.on('activate', () => {
 /**
  * Event to open ROM file.
  */
-ipcMain.on('openROM', (event, isDirty) => {
-  if (isDirty) {
-    // TODO: Handle this prompt.
-    showUnsavedChangesPrompt()
-  }
-
+ipcMain.on('openROM', (event) => {
   const selectedFileNames = showOpenDialog()
   if (!selectedFileNames) return
   const selectedFileName = selectedFileNames[0]
@@ -88,19 +83,6 @@ const fileDialogFilters = [
 function showOpenDialog() {
   return dialog.showOpenDialog(mainWindow, {
     filters: fileDialogFilters
-  })
-}
-
-/**
- * Shows a prompt warning of unsaved changes and asks if user would like to continue.
- * Returns true if user chooses to continue else false.
- */
-function showUnsavedChangesPrompt() {
-  return dialog.showMessageBox(mainWindow, {
-    type: 'question',
-    message: "Do you want to save changes you made?",
-    detail: "Your changes will be lost if you don't save them.",
-    buttons: ["Save", "Cancel", "Don't Save"]  // Order is reversed when this is displayed.
   })
 }
 
