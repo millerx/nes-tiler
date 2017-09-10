@@ -1,9 +1,10 @@
-const {app, BrowserWindow, ipcMain, dialog} = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 const fs = require('fs')
 const path = require('path')
 const url = require('url')
 const nesRom = require('./nesRom.js')
 const menu = require('./menu.js')
+const dialogs = require('./dialogs.js')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -64,7 +65,7 @@ app.on('activate', () => {
  * Event to open ROM file.
  */
 ipcMain.on('openROM', (event) => {
-  const selectedFileNames = showOpenDialog()
+  const selectedFileNames = dialogs.showOpenDialog()
   if (!selectedFileNames) return
   const selectedFileName = selectedFileNames[0]
 
@@ -75,41 +76,18 @@ ipcMain.on('openROM', (event) => {
   mainWindow.webContents.send('openROMComplete', selectedFileName, rom)
 })
 
-const fileDialogFilters = [
-  {name: 'NES ROMs', extensions: ['nes']},
-  {name: 'All Files', extensions: ['*']}
-]
-
-function showOpenDialog() {
-  return dialog.showOpenDialog(mainWindow, {
-    filters: fileDialogFilters
-  })
-}
-
 /**
  * Event to save ROM file.
  */
 ipcMain.on('saveROM', (event, saveAs, fileName, rom) => {
   if (saveAs) {
-    const selectedFileName = showSaveDialog()
-    if (selectedFileName) fileName = selectedFileName
+    fileName = dialogs.showSaveDialog()
   }
 
-  fs.writeFileSync(fileName, rom.buffer)
-  console.log('Saved ROM '+fileName)
+  if (fileName) {
+    fs.writeFileSync(fileName, rom.buffer)
+    console.log('Saved ROM '+fileName)
+  } // else user cancelled SaveAs
+
   event.returnValue = {fileName: fileName}
 })
-
-function showSaveDialog() {
-  let fileName = dialog.showSaveDialog(mainWindow, {
-    filters: fileDialogFilters
-  })
-
-  // Append default extension.  I am surpsied showSaveDialog does not have an option to do this for us.
-  if (fileName && fileName.indexOf('.') < 0) {
-    fileName += '.nes'
-  }
-
-  return fileName
-}
-
