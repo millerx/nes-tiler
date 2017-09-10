@@ -36,10 +36,10 @@ ipcRenderer.on('rom-loaded', (event, rom) => {
  * Called when the ROM needs to be saved.  Update the in-memory ROM stored here and send it
  * to the main process on another "save" message.
  */
-ipcRenderer.on('save', (event) => {
+ipcRenderer.on('save', (event, saveAs) => {
   if (editorView.isROMDirty()) {
     console.log('Saving ROM.')
-    ipcRenderer.send('save', _rom)
+    ipcRenderer.send('save', saveAs, _rom)
   }
 })
 

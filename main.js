@@ -10,13 +10,15 @@ const menu = require('./menu.js')
 let mainWindow
 
 // Name of the file that is currently open.
-let _openFileName = null
+let _openFileName
+
+let _main = this
 
 function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 928, height: 624})
 
-  menu.setApplicationMenu()
+  menu.setApplicationMenu(_main)
 
   // Open the DevTools.
   //mainWindow.webContents.openDevTools()
@@ -66,8 +68,9 @@ app.on('activate', () => {
 /**
  * Opens dialog to select a ROM, loads that ROM into memory and sends that to the render thread.
  */
-menu.setOpenFn(() => {
+exports.openROM = function() {
   // TODO: Prompt if ROM is dirty.
+  //showUnsavedChangesPrompt()
 
   const selectedFiles = showOpenDialog()
   if (!selectedFiles) return
@@ -76,14 +79,29 @@ menu.setOpenFn(() => {
   console.log('Loading ROM '+_openFileName)
   const rom = nesRom.readRom(fs.readFileSync(_openFileName))
   mainWindow.webContents.send('rom-loaded', rom)
-})
+}
+
+const fileDialogFilters = [
+  {name: 'NES ROMs', extensions: ['nes']},
+  {name: 'All Files', extensions: ['*']}
+]
 
 function showOpenDialog() {
   return dialog.showOpenDialog(mainWindow, {
-    filters: [
-      {name: 'NES ROMs', extensions: ['nes']},
-      {name: 'All Files', extensions: ['*']}
-    ]
+    filters: fileDialogFilters
+  })
+}
+
+/**
+ * Shows a prompt warning of unsaved changes and asks if user would like to continue.
+ * Returns true if user chooses to continue else false.
+ */
+function showUnsavedChangesPrompt() {
+  dialog.showMessageBox(mainWindow, {
+    type: 'question',
+    message: "Do you want to save changes you made?",
+    detail: "Your changes will be lost if you don't save them.",
+    buttons: ["Save", "Cancel", "Don't Save"]  // Order is reversed when this is displayed.
   })
 }
 
@@ -91,16 +109,37 @@ function showOpenDialog() {
  * Send a message to renderer to "save" which updates in-memory ROM and sends that
  * in-memory ROM back to the main process on another "save" message.
  */
-menu.setSaveFn(() => {
-  mainWindow.webContents.send('save')
-})
+exports.saveROM = function(saveAs) {
+  if (!_openFileName) return
+
+  mainWindow.webContents.send('save', saveAs)
+}
+
+function showSaveDialog() {
+  let fileName = dialog.showSaveDialog(mainWindow, {
+    filters: fileDialogFilters
+  })
+
+  // Append default extension.  I am surpsied showSaveDialog does not have an option to do this for us.
+  if (fileName && fileName.indexOf('.') < 0) {
+    fileName += '.nes'
+  }
+
+  return fileName
+}
 
 /**
  * Message with ROM contents to save to disk.
  */
-ipcMain.on('save', (event, rom) => {
-  // TODO: Implement Save-As
-  fs.writeFileSync(_openFileName, rom.buffer)
-  console.log('Saved ROM '+_openFileName)
+ipcMain.on('save', (event, saveAs, rom) => {
+  let fileName = _openFileName
+  if (saveAs) {
+    const selectedFileName = showSaveDialog()
+    if (selectedFileName) fileName = selectedFileName
+  }
+
+  fs.writeFileSync(fileName, rom.buffer)
+  _openFileName = fileName
+  console.log('Saved ROM '+fileName)
   mainWindow.webContents.send('saveComplete')
 })

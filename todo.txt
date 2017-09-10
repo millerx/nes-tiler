@@ -3,7 +3,10 @@ Save rom
   -Reflect editor changes back onto rom
   -Use ROM as common bus, pass tileIndexes.
   -Only save ROM if it is "dirty"
-  Open and Save As file dialogs
+  -Open and Save As file dialogs
+  Unsaved Changes dialog on Open
+  Try cleanig up this code with remote!
+  Factor out a dialogs.js
 Before open if you click on the different views it should not produce error.  Selecting Save should also not produce error
 TileSetView TODOs for loading optimizations
 Choose a ROM via menu option.
