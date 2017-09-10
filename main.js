@@ -9,16 +9,9 @@ const menu = require('./menu.js')
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
-// Name of the file that is currently open.
-let _openFileName
-
-let _main = this
-
 function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 928, height: 624})
-
-  menu.setApplicationMenu(_main)
 
   // Open the DevTools.
   //mainWindow.webContents.openDevTools()
@@ -26,6 +19,8 @@ function createWindow () {
   // Emitted when the window is loaded.
   //mainWindow.webContents.on('did-finish-load', () => {
   //})
+
+  menu.setApplicationMenu(mainWindow)
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
@@ -66,20 +61,24 @@ app.on('activate', () => {
 })
 
 /**
- * Opens dialog to select a ROM, loads that ROM into memory and sends that to the render thread.
+ * Event to open ROM file.
  */
-exports.openROM = function() {
-  // TODO: Prompt if ROM is dirty.
-  //showUnsavedChangesPrompt()
+ipcMain.on('openROM', (event, isDirty) => {
+  if (isDirty) {
+    // TODO: Handle this prompt.
+    showUnsavedChangesPrompt()
+  }
 
-  const selectedFiles = showOpenDialog()
-  if (!selectedFiles) return
-  _openFileName = selectedFiles[0]
+  const selectedFileNames = showOpenDialog()
+  if (!selectedFileNames) return
+  const selectedFileName = selectedFileNames[0]
 
-  console.log('Loading ROM '+_openFileName)
-  const rom = nesRom.readRom(fs.readFileSync(_openFileName))
-  mainWindow.webContents.send('rom-loaded', rom)
-}
+  console.log('Loading ROM '+selectedFileName)
+  const rom = nesRom.readRom(fs.readFileSync(selectedFileName))
+  // HACK: As of Electron 1.6.11, rom sent in sendSync does not appear to deserialize correctly because rom.buffer.length is undefined.
+
+  mainWindow.webContents.send('openROMComplete', selectedFileName, rom)
+})
 
 const fileDialogFilters = [
   {name: 'NES ROMs', extensions: ['nes']},
@@ -97,7 +96,7 @@ function showOpenDialog() {
  * Returns true if user chooses to continue else false.
  */
 function showUnsavedChangesPrompt() {
-  dialog.showMessageBox(mainWindow, {
+  return dialog.showMessageBox(mainWindow, {
     type: 'question',
     message: "Do you want to save changes you made?",
     detail: "Your changes will be lost if you don't save them.",
@@ -106,14 +105,18 @@ function showUnsavedChangesPrompt() {
 }
 
 /**
- * Send a message to renderer to "save" which updates in-memory ROM and sends that
- * in-memory ROM back to the main process on another "save" message.
+ * Event to save ROM file.
  */
-exports.saveROM = function(saveAs) {
-  if (!_openFileName) return
+ipcMain.on('saveROM', (event, saveAs, fileName, rom) => {
+  if (saveAs) {
+    const selectedFileName = showSaveDialog()
+    if (selectedFileName) fileName = selectedFileName
+  }
 
-  mainWindow.webContents.send('save', saveAs)
-}
+  fs.writeFileSync(fileName, rom.buffer)
+  console.log('Saved ROM '+fileName)
+  event.returnValue = {fileName: fileName}
+})
 
 function showSaveDialog() {
   let fileName = dialog.showSaveDialog(mainWindow, {
@@ -128,18 +131,3 @@ function showSaveDialog() {
   return fileName
 }
 
-/**
- * Message with ROM contents to save to disk.
- */
-ipcMain.on('save', (event, saveAs, rom) => {
-  let fileName = _openFileName
-  if (saveAs) {
-    const selectedFileName = showSaveDialog()
-    if (selectedFileName) fileName = selectedFileName
-  }
-
-  fs.writeFileSync(fileName, rom.buffer)
-  _openFileName = fileName
-  console.log('Saved ROM '+fileName)
-  mainWindow.webContents.send('saveComplete')
-})

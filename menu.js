@@ -1,13 +1,13 @@
 const {app, Menu} = require('electron')
 
-exports.setApplicationMenu = function(main) {
+exports.setApplicationMenu = function(mainWindow) {
   let template = [
     {
       label: 'File',
       submenu: [
-        {label: 'Open...', accelerator: 'CommandOrControl+O', click: main.openROM},
-        {label: 'Save', accelerator: 'CommandOrControl+S', click: () => main.saveROM(false)},
-        {label: 'Save As...', accelerator: 'Shift+CommandOrControl+S', click: () => main.saveROM(true)}
+        {label: 'Open...', accelerator: 'CommandOrControl+O', click: () => mainWindow.webContents.send('openROM')},
+        {label: 'Save', accelerator: 'CommandOrControl+S', click: () => mainWindow.webContents.send('saveROM', false)},
+        {label: 'Save As...', accelerator: 'Shift+CommandOrControl+S', click: () => mainWindow.webContents.send('saveROM', true)}
       ]
     },
     {

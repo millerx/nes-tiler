@@ -7,7 +7,8 @@ const {CHR_BYTE_SIZE} = require('./nesPatternTable.js')
 const tileSetView = require('./tileSetView.js')
 const editorView = require('./editorView.js')
 
-let _rom = null
+let _openFileName  // Name of the file that is currently open.
+let _rom  // ROM being edited.
 
 /**
  * Initialize views.
@@ -23,26 +24,29 @@ function init() {
 init()
 
 /**
- * Called when a ROM is loaded.
- * rom  NES ROM object.
+ * Open ROM event from menu.
  */
-ipcRenderer.on('rom-loaded', (event, rom) => {
+ipcRenderer.on('openROM', (event) => {
+  // See HACK in main.js why this is async.
+  ipcRenderer.send('openROM', editorView.isROMDirty())
+})
+
+ipcRenderer.on('openROMComplete', (event, fileName, rom) => {
+  _openFileName = fileName
   _rom = rom
-  tileSetView.loadROM(rom)
-  editorView.loadROM(rom)
+  tileSetView.loadROM(_rom)
+  editorView.loadROM(_rom)
 })
 
 /**
- * Called when the ROM needs to be saved.  Update the in-memory ROM stored here and send it
- * to the main process on another "save" message.
+ * Save or SaveAs ROM event from menu.
  */
-ipcRenderer.on('save', (event, saveAs) => {
+ipcRenderer.on('saveROM', (event, saveAs) => {
   if (editorView.isROMDirty()) {
     console.log('Saving ROM.')
-    ipcRenderer.send('save', saveAs, _rom)
+    const ret = ipcRenderer.sendSync('saveROM', saveAs, _openFileName, _rom)
+    _openFileName = ret.fileName
+    editorView.clearROMDirty()
   }
 })
 
-ipcRenderer.on('saveComplete', (event) => {
-  editorView.clearROMDirty()
-})
