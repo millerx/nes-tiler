@@ -2,7 +2,9 @@
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
 
-const {ipcRenderer} = require('electron')
+const {ipcRenderer, remote} = require('electron')
+const fs = remote.require('fs')
+const nesRom = require('./nesRom.js')
 const {CHR_BYTE_SIZE} = require('./nesPatternTable.js')
 const tileSetView = require('./tileSetView.js')
 const editorView = require('./editorView.js')
@@ -40,13 +42,9 @@ ipcRenderer.on('openROM', (event) => {
   const selectedFileName = selectedFileNames[0]
   // We don't set _openFileName until file is opened successfully.
 
-  ipcRenderer.send('openROM', selectedFileName)
-})
-
-// See HACK in main.js why this is async.
-ipcRenderer.on('openROMComplete', (event, fileName, rom) => {
-  _openFileName = fileName
-  _rom = rom
+  console.log('Loading ROM '+selectedFileName)
+  _rom = nesRom.readRom(fs.readFileSync(selectedFileName))
+  _openFileName = selectedFileName
   tileSetView.loadROM(_rom)
   editorView.loadROM(_rom)
 })
@@ -65,8 +63,8 @@ function saveROM(event, saveAs) {
     if (!fileName) return  // User cancelled.
   }
 
-  const ret = ipcRenderer.sendSync('saveROM', fileName, _rom)
-  if (!ret.result) return  // Save failed somehow.
+  fs.writeFileSync(fileName, _rom.buffer)
+  console.log('Saved ROM '+fileName)
 
   _openFileName = fileName
   editorView.clearROMDirty()

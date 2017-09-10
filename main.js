@@ -1,10 +1,7 @@
 const {app, BrowserWindow, ipcMain} = require('electron')
-const fs = require('fs')
 const path = require('path')
 const url = require('url')
-const nesRom = require('./nesRom.js')
 const menu = require('./menu.js')
-const dialogs = require('./dialogs.js')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -61,21 +58,3 @@ app.on('activate', () => {
   }
 })
 
-/**
- * Event to open ROM file.
- */
-ipcMain.on('openROM', (event, fileName) => {
-  console.log('Loading ROM '+fileName)
-  const rom = nesRom.readRom(fs.readFileSync(fileName))
-  // HACK: As of Electron 1.6.11, rom sent in sendSync does not appear to deserialize correctly because rom.buffer.length is undefined.
-  mainWindow.webContents.send('openROMComplete', fileName, rom)
-})
-
-/**
- * Event to save ROM file.
- */
-ipcMain.on('saveROM', (event, fileName, rom) => {
-  fs.writeFileSync(fileName, rom.buffer)
-  console.log('Saved ROM '+fileName)
-  event.returnValue = {result: true}
-})
