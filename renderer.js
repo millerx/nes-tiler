@@ -34,7 +34,13 @@ ipcRenderer.on('openROM', (event) => {
     if (ret === dialogs.DLG_SAVE) saveROM(null, false);
     // if DLG_DONT_SAVE then just continue
   }
-  ipcRenderer.send('openROM')
+
+  const selectedFileNames = dialogs.showOpenDialog()
+  if (!selectedFileNames) return  // User cancelled.
+  const selectedFileName = selectedFileNames[0]
+  // We don't set _openFileName until file is opened successfully.
+
+  ipcRenderer.send('openROM', selectedFileName)
 })
 
 // See HACK in main.js why this is async.
@@ -49,14 +55,21 @@ ipcRenderer.on('openROMComplete', (event, fileName, rom) => {
  * Save or SaveAs ROM event from menu.
  */
 function saveROM(event, saveAs) {
-  if (editorView.isROMDirty()) {
-    console.log('Saving ROM.')
-    const ret = ipcRenderer.sendSync('saveROM', saveAs, _openFileName, _rom)
-    if (ret.fileName) {
-      _openFileName = ret.fileName
-      editorView.clearROMDirty()
-    } // else user cancelled SaveAs
+  if (!editorView.isROMDirty()) return
+
+  console.log('Saving ROM.')
+  let fileName = _openFileName
+  if (saveAs) {
+    fileName = dialogs.showSaveDialog()
+    // We only update _openFileName after save is successful.
+    if (!fileName) return  // User cancelled.
   }
+
+  const ret = ipcRenderer.sendSync('saveROM', fileName, _rom)
+  if (!ret.result) return  // Save failed somehow.
+
+  _openFileName = fileName
+  editorView.clearROMDirty()
 }
 
 ipcRenderer.on('saveROM', saveROM)

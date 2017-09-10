@@ -64,30 +64,18 @@ app.on('activate', () => {
 /**
  * Event to open ROM file.
  */
-ipcMain.on('openROM', (event) => {
-  const selectedFileNames = dialogs.showOpenDialog()
-  if (!selectedFileNames) return
-  const selectedFileName = selectedFileNames[0]
-
-  console.log('Loading ROM '+selectedFileName)
-  const rom = nesRom.readRom(fs.readFileSync(selectedFileName))
+ipcMain.on('openROM', (event, fileName) => {
+  console.log('Loading ROM '+fileName)
+  const rom = nesRom.readRom(fs.readFileSync(fileName))
   // HACK: As of Electron 1.6.11, rom sent in sendSync does not appear to deserialize correctly because rom.buffer.length is undefined.
-
-  mainWindow.webContents.send('openROMComplete', selectedFileName, rom)
+  mainWindow.webContents.send('openROMComplete', fileName, rom)
 })
 
 /**
  * Event to save ROM file.
  */
-ipcMain.on('saveROM', (event, saveAs, fileName, rom) => {
-  if (saveAs) {
-    fileName = dialogs.showSaveDialog()
-  }
-
-  if (fileName) {
-    fs.writeFileSync(fileName, rom.buffer)
-    console.log('Saved ROM '+fileName)
-  } // else user cancelled SaveAs
-
-  event.returnValue = {fileName: fileName}
+ipcMain.on('saveROM', (event, fileName, rom) => {
+  fs.writeFileSync(fileName, rom.buffer)
+  console.log('Saved ROM '+fileName)
+  event.returnValue = {result: true}
 })
