@@ -4,7 +4,7 @@
 
 const fs = require('fs')
 
-const INesConsts = {
+exports.INesConsts = {
   HEADER_SIZE: 16,
 
   // Flags6
@@ -30,6 +30,7 @@ const INesConsts = {
  *   flags10:  // Flags for byte 10 (unofficial).
  *   mapper:   // Memory mapper used by the cartridge.  See http://fms.komkon.org/EMUL8/NES.html#LABM
  * }
+ * Returns null if there is no header.
  */
 function readINesHeader(buffer) {
   let i = 0
@@ -38,7 +39,7 @@ function readINesHeader(buffer) {
       buffer[i++] === 0x45 &&
       buffer[i++] === 0x53 &&
       buffer[i++] === 0x1a) {
-    var ines = {
+    let ines = {
       prgRomSize: buffer[i++],
       chrRomSize: buffer[i++],
       flags6: buffer[i++],
@@ -46,6 +47,7 @@ function readINesHeader(buffer) {
       prgRamSize: buffer[i++],
       flags9: buffer[i++],
       flags10: buffer[i++],
+      mapper: 0  // Populated below.
     }
     // flags6 bit 4-7 has the lower 4 bits of the mapper.
     // flags7 bit 4-7 has the higher 4 bits of the mapper.
@@ -58,20 +60,19 @@ function readINesHeader(buffer) {
 }
 
 /**
- * Synchronously reads a ROM file.
+ * Reads the given buffer as an NES ROM.
  * Returns: {
- *   inesHeader: {},  // Object with iNES structure read from the file.  null if iNES header is not recogised.
- *   rom: Buffer      // Buffer containing the ROM including the iNES header.
- *   rom_no_header: Buffer  // Buffer containing the ROM excluding the iNES header. 
+ *   inesHeader  // Object with iNES structure read from the file.  null if an iNES header is not detected.
+ *   buffer      // Buffer passed into the function.
+ *   dataOffset  // Offset in the buffer where the ROM data actually starts.
  * }
  */
-exports.readRom = function(file) {
-  var buffer = fs.readFileSync(file)
-  var inesHeader = readINesHeader(buffer)
+exports.readRom = function(buffer) {
+  const inesHeader = readINesHeader(buffer)
+  const dataOffset = inesHeader ? exports.INesConsts.HEADER_SIZE : 0
   return {
     inesHeader: inesHeader,
-    rom: buffer,
-    // slice() is a light weight operation.
-    rom_no_header: inesHeader ? buffer.slice(INesConsts.HEADER_SIZE) : buffer
+    buffer: buffer,
+    dataOffset: dataOffset
   }
 }

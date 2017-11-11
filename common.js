@@ -1,4 +1,4 @@
-const {CHR_WIDTH, CHR_HEIGHT, CHR_PIXEL_SIZE} = require('./nesPatternTable.js')
+const {CHR_WIDTH, CHR_HEIGHT, CHR_PIXEL_SIZE, CHR_BYTE_SIZE} = require('./nesPatternTable.js')
 
 const RGBA_LEN = 4
 
@@ -52,4 +52,25 @@ function to2DigitHex(d) {
 exports.toCSSColorStr = function(color) {
   // Using # notation the alpha channel is not represented.
   return '#'+to2DigitHex(color[0])+to2DigitHex(color[1])+to2DigitHex(color[2])
+}
+
+exports.copyIntoArray = function(targetArray, targetOffset, sourceArray, sourceOffset, sourceLength) {
+  sourceOffset = sourceOffset || 0
+  sourceLength = sourceLength || sourceArray.length
+
+  const sourceEndOffset = sourceOffset + sourceLength
+  while (sourceOffset < sourceEndOffset) {
+    targetArray[targetOffset] = sourceArray[sourceOffset]
+    ++targetOffset
+    ++sourceOffset
+  }
+}
+
+exports.getByteIndexOfTile = function(rom, tileIndex) {
+  return (tileIndex * CHR_BYTE_SIZE) + rom.dataOffset
+}
+
+exports.sliceTileBytes = function(rom, tileIndex) {
+  const byteIndex = exports.getByteIndexOfTile(rom, tileIndex)
+  return rom.buffer.slice(byteIndex, byteIndex + CHR_BYTE_SIZE)
 }

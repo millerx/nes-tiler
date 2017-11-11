@@ -1,49 +1,24 @@
-const electron = require('electron')
-const app = electron.app
-const BrowserWindow = electron.BrowserWindow
-const Menu = electron.Menu
-
+const {app, BrowserWindow, ipcMain} = require('electron')
 const path = require('path')
 const url = require('url')
-
-const nesRom = require('./nesRom.js')
+const menu = require('./menu.js')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
-// TODO: Never worked right on OSX Sierra.
-function createMenu() {
-  const template = [
-    {
-      label: 'Miller',
-      submenu: [
-        {label: 'Reload App', id: 'ReloadApp'},
-      ]
-    },
-  ]
-
-  const menu = Menu.buildFromTemplate(template)
-  //Menu.setApplicationMenu(menu)
-  Menu.getApplicationMenu().insert(0, menu.items[0])
-}
-
 function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 928, height: 624})
-
-  // Create main menu.
-  //createMenu()
 
   // Open the DevTools.
   //mainWindow.webContents.openDevTools()
 
   // Emitted when the window is loaded.
-  mainWindow.webContents.on('did-finish-load', () => {
-    // Load an NES ROM.
-    const rom = nesRom.readRom('BlasterMaster.nes')
-    mainWindow.webContents.send('rom-loaded', rom)
-  })
+  //mainWindow.webContents.on('did-finish-load', () => {
+  //})
+
+  menu.setApplicationMenu(mainWindow)
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {
@@ -83,5 +58,3 @@ app.on('activate', () => {
   }
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.

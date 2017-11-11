@@ -8,9 +8,21 @@ const {CHR_WIDTH, CHR_HEIGHT} = require('./nesPatternTable.js')
 
 const EDITOR_SCALE = 16
 
-let _unscaledCanvas = null  // Offscreen canvas.
-let _mouseDown = false
-let _tile = null
+let _unscaledCanvas  // Offscreen canvas.
+let _mouseDown = false  // Is the mouse currently pressed down?
+let _rom  // ROM being edited.
+let _tileIndex = -1  // Index of tile being edited.
+let _tile = null  // Deinterlaced tile.
+let _isROMDirty = false  // True if the ROM has been updated since last save.
+let _onTileChangedFn  // fn(tileBytes) Function called when a tile has changed.
+
+/**
+ * Called by renderer.js to initialize.
+ */
+exports.init = function() {
+  initEditorCanvas()
+  _unscaledCanvas = createUnscaledCanvas()
+}
 
 /**
  * Initialize visible canvas.
@@ -42,25 +54,55 @@ function createUnscaledCanvas() {
   return canvas
 }
 
-/**
- * Called by renderer.js to initialize.
- */
-exports.init = function() {
-  initEditorCanvas()
-  _unscaledCanvas = createUnscaledCanvas()
+exports.onTileChanged = function(fn) {
+  _onTileChangedFn = fn
+}
+
+exports.loadROM = function(rom) {
+  _rom = rom
+  // Reset in case this is not the first ROM we have loaded.
+  _tileIndex = -1
+  _tile = null
+  _isROMDirty = false
+
+  // Clear the canvas in case this is not the first ROM we have loaded.
+  clearEditorView()
+}
+
+exports.isROMDirty = function() {
+  return _isROMDirty
+}
+
+exports.clearROMDirty = function() {
+  _isROMDirty = false
 }
 
 /**
  * Loads a tile into the Editor View.
  */
-exports.editTile = function(tileBytes) {
+exports.editTile = function(tileIndex) {
+  _tileIndex = tileIndex
+
+  const tileBytes = cmn.sliceTileBytes(_rom, tileIndex)
   _tile = nesChr.deinterlaceTile(tileBytes)
 
+  drawEditorView(_tile)
+}
+
+function clearEditorView() {
+  // Draw off-screen canvas to the scaled on-screen canvas.
+  const canvas = document.getElementById('editorCanvas')
+  let ctx = cmn.getContext2DNA(canvas)
+  ctx.fillStyle = 'black'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+}
+
+function drawEditorView(tile) {
   // Write pixels to the off-screen unscaled canvas.
   // getContext with {alpha: false} is important here because we re-draw over the old tile.
   let ctx = cmn.getContext2DNA(_unscaledCanvas)
   let imgData = ctx.createImageData(CHR_WIDTH, CHR_HEIGHT)
-  cmn.writeImageData(imgData, _tile, 0, 0)
+  cmn.writeImageData(imgData, tile, 0, 0)
   ctx.putImageData(imgData, 0, 0)
 
   // Draw off-screen canvas to the scaled on-screen canvas.
@@ -71,6 +113,7 @@ exports.editTile = function(tileBytes) {
 
 function onMouseMove(mouseEvent) {
   if (!_mouseDown) return
+  if (!_rom) return
 
   // Mouse coordinates are in screen coordinates.
 
@@ -96,7 +139,17 @@ function onMouseMove(mouseEvent) {
  */
 function changePixel(ux, uy, palNum) {
   _tile[uy * CHR_WIDTH + ux] = palNum
+
+  const tileBytes = nesChr.interlaceTile(_tile)
+  const byteIndex = cmn.getByteIndexOfTile(_rom, _tileIndex)
+  cmn.copyIntoArray(_rom.buffer, byteIndex, tileBytes)
+  _isROMDirty = true
+
   drawPixel(ux, uy, palNum)
+
+  if (_onTileChangedFn) {
+    _onTileChangedFn(_tileIndex)
+  }
 }
 
 /**
