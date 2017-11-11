@@ -26,11 +26,17 @@ exports.init = function() {
 exports.loadROM = function(rom) {
   _rom = rom
   _selectedTileIndex = -1  // Reset in case this is not the first ROM we have opened.
+  drawTileSet()
+}
 
+/**
+ * Draws the entire tile set from _rom.
+ */
+function drawTileSet() {
   let canvas = document.getElementById('tileSetCanvas')
 
   // Adjust canvas size to number of tiles.
-  const tileCount = ~~((rom.buffer.length - rom.dataOffset) / CHR_BYTE_SIZE)
+  const tileCount = ~~((_rom.buffer.length - _rom.dataOffset) / CHR_BYTE_SIZE)
   canvas.height = (tileCount / TILESET_WIDTH) * CHR_HEIGHT
 
   let ctx = cmn.getContext2DNA(canvas)
