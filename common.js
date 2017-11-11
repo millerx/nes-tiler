@@ -66,11 +66,15 @@ exports.copyIntoArray = function(targetArray, targetOffset, sourceArray, sourceO
   }
 }
 
-exports.getByteIndexOfTile = function(rom, tileIndex) {
-  return (tileIndex * CHR_BYTE_SIZE) + rom.dataOffset
+exports.colorTileToString = function(colorTile) {
+  let arr = []
+  for (let i = 0; i < CHR_PIXEL_SIZE; i+=CHR_WIDTH) {
+    arr.push(colorTile.slice(i, i+CHR_WIDTH).join(' '))
+  }
+  return arr.join('\n')
 }
 
-exports.sliceTileBytes = function(rom, tileIndex) {
-  const byteIndex = exports.getByteIndexOfTile(rom, tileIndex)
-  return rom.buffer.slice(byteIndex, byteIndex + CHR_BYTE_SIZE)
+exports.printInterlacedTile = function(tile) {
+  tile.forEach((i) => process.stdout.write(i.toString(16)+' '))
+  console.log()
 }

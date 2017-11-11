@@ -4,6 +4,7 @@ const {ipcRenderer} = require('electron')
 const cmn = require('./common.js')
 const nesChr = require('./nesPatternTable.js')
 const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js')
+const tiles = require('./nesRomTiles.js')
 
 const TILESET_WIDTH = 40  // Tiles to draw on a single row.
 
@@ -90,8 +91,7 @@ function onClick(mouseEvent) {
 }
 
 exports.updateTile = function(tileIndex) {
-  const tileBytes = cmn.sliceTileBytes(_rom, tileIndex)
-  const tile = nesChr.deinterlaceTile(tileBytes)
+  const tile = tiles.readTile(_rom, tileIndex)
   drawTile(tile)
 }
 

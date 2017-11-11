@@ -2,8 +2,6 @@
  * Functions to work with NES ROMs.
  */
 
-const fs = require('fs')
-
 exports.INesConsts = {
   HEADER_SIZE: 16,
 

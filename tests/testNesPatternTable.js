@@ -1,7 +1,6 @@
 const assert = require('assert');
 assert.sequal = assert.strictEqual;
 assert.dsequal = assert.deepStrictEqual;
-const nesRom = require('../nesRom.js');
 const nesPTable = require('../nesPatternTable.js');
 
 const PATTERN_TABLE = new Uint8Array([

@@ -3,8 +3,8 @@
 // Scaled coordinates are screen pixels.  If 16 screen pixels represent one tile pixel then tile coord 1,1 is screen coord 16,16.
 
 const cmn = require('./common.js')
-const nesChr = require('./nesPatternTable.js')
 const {CHR_WIDTH, CHR_HEIGHT} = require('./nesPatternTable.js')
+const tiles = require('./nesRomTiles.js')
 
 const EDITOR_SCALE = 16
 
@@ -82,10 +82,7 @@ exports.clearROMDirty = function() {
  */
 exports.editTile = function(tileIndex) {
   _tileIndex = tileIndex
-
-  const tileBytes = cmn.sliceTileBytes(_rom, tileIndex)
-  _tile = nesChr.deinterlaceTile(tileBytes)
-
+  _tile = tiles.readTile(_rom, _tileIndex)
   drawEditorView(_tile)
 }
 
@@ -140,9 +137,7 @@ function onMouseMove(mouseEvent) {
 function changePixel(ux, uy, palNum) {
   _tile[uy * CHR_WIDTH + ux] = palNum
 
-  const tileBytes = nesChr.interlaceTile(_tile)
-  const byteIndex = cmn.getByteIndexOfTile(_rom, _tileIndex)
-  cmn.copyIntoArray(_rom.buffer, byteIndex, tileBytes)
+  tiles.writeTile(_rom, _tile, _tileIndex)
   _isROMDirty = true
 
   drawPixel(ux, uy, palNum)
