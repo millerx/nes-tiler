@@ -30,6 +30,26 @@
     }
     #editorCanvas {
       cursor: default;
+      border: 1px solid white;
+    }
+    .paletteForeBack {
+      width: 32px;
+      height: 32px;
+      float: left;
+      position: absolute;
+      border: 1px solid white;
+    }
+    .paletteColor {
+      width: 48px;
+      height: 80px;
+      float: right;
+      border: 1px solid white;
+    }
+    .buttonLikeText {
+      cursor: default
+    }
+    .buttonLikeText:hover {
+      color: cyan
     }
     </style>
   </head>
@@ -56,9 +76,15 @@
         </div>
       </div>
       <div>
-        Palette
-        <div class="subwindow palette">
-          <canvas id="paletteCanvas" width="256" height="128"></canvas>
+        Palette <span class="buttonLikeText" id="resetPalette" title="Reset to default">♺</span>
+        <div class="subwindow palette" style="width: 280px; height: 100px; position: relative;">
+          <div class="paletteForeBack" id="paletteBack" style="left: 16px; top: 16px;"></div>
+          <div class="paletteForeBack" id="paletteFore"></div>
+          <!-- float:right so these divs are declared right-to-left. -->
+          <div class="paletteColor" id="paletteColor4"></div>
+          <div class="paletteColor" id="paletteColor3"></div>
+          <div class="paletteColor" id="paletteColor2"></div>
+          <div class="paletteColor" id="paletteColor1"></div>
         </div>
       </div>
     </div>

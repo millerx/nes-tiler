@@ -1,16 +1,18 @@
 // Code for the tileSetView that displays all tiles in a ROM.
 
-const {ipcRenderer} = require('electron')
-const cmn = require('./common.js')
-const nesChr = require('./nesPatternTable.js')
-const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js')
-const tiles = require('./nesRomTiles.js')
+const {ipcRenderer} = require('electron');
+const cmn = require('./common.js');
+const nesChr = require('./nesPatternTable.js');
+const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js');
+const tiles = require('./nesRomTiles.js');
 
-const TILESET_WIDTH = 40  // Tiles to draw on a single row.
+const TILESET_WIDTH = 40;  // Tiles to draw on a single row.
 
 let _rom  // ROM being viewed.
 let _selectedTileIndex = -1  // Index of selected tile.  -1 if no tile is selected.
 let _onSelectedFn  // fn(tileBytes)  Function called when a tile is selected.
+let _palette  // Palette [[r,g,b,a]] to draw the file.
+
 
 /**
  * Called by renderer.js to initialize.
@@ -50,7 +52,7 @@ function drawTileSet() {
     // TODO: Reuse the same tile buffer instead of creating one with every call to deinterlaceTile.
     const tileBytes = _rom.buffer.slice(i, i+CHR_BYTE_SIZE)
     const tile = nesChr.deinterlaceTile(tileBytes)
-    cmn.writeImageData(imgData, tile, (ti % TILESET_WIDTH), ~~(ti / TILESET_WIDTH))
+    cmn.writeImageData(imgData, tile, (ti % TILESET_WIDTH), ~~(ti / TILESET_WIDTH), _palette)
     ++ti
   }
 
@@ -100,9 +102,15 @@ function drawTile(tile) {
   let ctx = cmn.getContext2DNA(canvas)
   const imgData = ctx.createImageData(CHR_WIDTH, CHR_HEIGHT)
 
-  cmn.writeImageData(imgData, tile, 0, 0)
+  cmn.writeImageData(imgData, tile, 0, 0, _palette)
 
   const x = (_selectedTileIndex % TILESET_WIDTH) * CHR_WIDTH
   const y = ~~(_selectedTileIndex / TILESET_WIDTH) * CHR_HEIGHT
   ctx.putImageData(imgData, x, y)
+}
+
+exports.setPalette = function(palette) {
+  _palette = palette
+  // Redraw the tileSet
+  if (_rom) drawTileSet()
 }

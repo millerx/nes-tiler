@@ -1,30 +1,28 @@
-const {app, Menu} = require('electron')
+const {app, Menu} = require('electron');
+
+// https://electronjs.org/docs/api/menu-item#roles
 
 exports.setApplicationMenu = function(mainWindow) {
   let template = [
     {
       label: 'File',
       submenu: [
-        {label: 'Open...', accelerator: 'CommandOrControl+O', click: () => mainWindow.webContents.send('openROM')},
-        {label: 'Save', accelerator: 'CommandOrControl+S', click: () => mainWindow.webContents.send('saveROM', false)},
-        {label: 'Save As...', accelerator: 'Shift+CommandOrControl+S', click: () => mainWindow.webContents.send('saveROM', true)}
+        {label: 'Open...', accelerator: 'CommandOrControl+O', click: function () {mainWindow.webContents.send('openROM');}},
+        {label: 'Save', accelerator: 'CommandOrControl+S', click: function () {mainWindow.webContents.send('saveROM', false);}},
+        {label: 'Save As...', accelerator: 'Shift+CommandOrControl+S', click: function () {mainWindow.webContents.send('saveROM', true);}}
       ]
-    },
-    {
+    },{
       label: 'Edit',
       submenu: [
         {role: 'undo'},
         {role: 'redo'},
         {type: 'separator'},
-        {role: 'cut'},
         {role: 'copy'},
         {role: 'paste'},
-        {role: 'pasteandmatchstyle'},
-        {role: 'delete'},
-        {role: 'selectall'}
+        {type: 'separator'},
+        {label: 'Swap Pen Colors', accelerator: 'CommandOrControl+P', click: function () {mainWindow.webContents.send('swapPenColors');}},
       ]
-    },
-    {
+    },{
       label: 'View',
       submenu: [
         {role: 'reload'},
@@ -37,15 +35,14 @@ exports.setApplicationMenu = function(mainWindow) {
         {type: 'separator'},
         {role: 'togglefullscreen'}
       ]
-    },
-    {
+    },{
       role: 'window',
       submenu: [
         {role: 'minimize'},
         {role: 'close'}
       ]
     }
-  ]
+  ];
 
   if (process.platform === 'darwin') {
     template.unshift({
@@ -61,7 +58,7 @@ exports.setApplicationMenu = function(mainWindow) {
         {type: 'separator'},
         {role: 'quit'}
       ]
-    })
+    });
 
     // Window menu
     template[4].submenu = [
@@ -70,10 +67,9 @@ exports.setApplicationMenu = function(mainWindow) {
       {role: 'zoom'},
       {type: 'separator'},
       {role: 'front'}
-    ]
+    ];
   }
 
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
-
