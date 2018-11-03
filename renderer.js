@@ -10,8 +10,8 @@ const editorView = require('./editorView.js');
 const paletteView = require('./paletteView.js');
 const dialogs = require('./dialogs.js');
 
-let _openFileName = null;  // Name of the file that is currently open.
-let _rom = null;  // ROM being edited.
+let _openFileName;  // Name of the file that is currently open.
+let _rom;  // ROM being edited.
 
 /**
  * Initialize views.

@@ -39,6 +39,7 @@ function setPaletteColor(palIndex, backgroundColor) {
 
 function onColorTableClicked(event) {
   setPaletteColor(_palIndex, event.srcElement.style.backgroundColor);
+  ipcRenderer.send('palette-update', _palette);
 }
 
 function onPaletteColorClicked(event) {

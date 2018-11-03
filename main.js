@@ -5,8 +5,8 @@ const menu = require('./menu.js');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow = null;
-let colorSelectWindow = null;
+let mainWindow;
+let colorSelectWindow;
 
 // Builds an URL to a file relative to the app path.
 function appUrl(filename) {
@@ -83,4 +83,9 @@ ipcMain.on('open-color-selector', function (event, palette, palIndex) {
       colorSelectWindow.show();
     });
   }
+});
+
+// Color-selector has changed the palette. Tell the main view.
+ipcMain.on('palette-update', function (event, palette) {
+  mainWindow.webContents.send('palette-update', palette);
 });
