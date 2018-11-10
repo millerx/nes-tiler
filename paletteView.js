@@ -2,6 +2,7 @@
 // changing the palette colors used as foreground and background colors.
 
 const cmn = require('./common.js');
+const domu = require('./domUtils.js');
 const {ipcRenderer} = require('electron');
 
 const defaultPalette = [  // Array of colors.  Each color is an rgba array.  [[r,g,b,a]]
@@ -14,56 +15,32 @@ let _foreIndex = 3;
 let _backIndex = 0;
 let _onPaletteChangedFn;  // fn(palette)  Function called when the palette has changed.
 let _onForeBackIndexChangedFn;  // fn(foreIndex, backIndex)  Function called when either the foreground or background palette index has changed.
+let _palForeElem;
+let _palBackElem;
+let _palElems = [];
 
 
-/**
- * Sets backgroundColor of the element to the paletteColor.
- * @param paletteColor [r,g,b,a]
- */
-function setBackgroundToPaletteColor(elemName, paletteColor) {
-  document.getElementById(elemName).style.backgroundColor = cmn.toCSSColorStr(paletteColor);
-}
-
-/**
- * Sets the colors of the foreground and background divs.
- */
+/** Sets the colors of the foreground and background divs. */
 function setForeBackDivs() {
-  setBackgroundToPaletteColor('paletteBack', _palette[_backIndex]);
-  setBackgroundToPaletteColor('paletteFore', _palette[_foreIndex]);
+  _palBackElem.style.backgroundColor = cmn.toCSSColorStr(_palette[_backIndex]);
+  _palForeElem.style.backgroundColor = cmn.toCSSColorStr(_palette[_foreIndex]);
 }
 
-/**
- * Sets the colors of all the divs.
- */
+/** Sets the colors of all the divs. */
 function setPaletteDivs() {
-  _palette.forEach((v,i) => setBackgroundToPaletteColor('paletteColor' + (i+1), v));
-
+  _palette.forEach((color,i) => _palElems[i].style.backgroundColor = cmn.toCSSColorStr(color));
   setForeBackDivs();
 }
 
-/**
- * Called by renderer.js to initialize.
- */
-exports.init = function() {
-  setPaletteDivs();
-
-  for (let i = 1; i < 5; ++i) {
-    document.getElementById('paletteColor' + i).addEventListener('click', onPaletteClick);
-  }
-
-  document.getElementById('resetPalette').addEventListener('click', onResetPaletteClick);
+function paletteIndex(id) {
+  return id.substr(-1);
 }
 
-/**
- * Returns the current palette [[r,g,b,a]]
- */
+/** Returns the current palette [[r,g,b,a]] */
 exports.getPalette = function() {
 	return _palette;
 }
 
-/**
- * Fired when the palette has changed.
- */
 exports.onPaletteChanged = function(fn) {
   _onPaletteChangedFn = fn;
 }
@@ -76,16 +53,10 @@ exports.getBackgroundIndex = function() {
   return _backIndex;
 }
 
-/**
- * Fired when either the foreground or background palette index has changed.
- */
 exports.onForeBackIndexChanged = function(fn) {
   _onForeBackIndexChangedFn = fn;
 }
 
-/**
- * Swaps the foreground and backbround palette indexes.
- */
 exports.swapForeBackColors = function() {
   const tmp = _foreIndex;
   _foreIndex = _backIndex;
@@ -95,21 +66,18 @@ exports.swapForeBackColors = function() {
   if (_onForeBackIndexChangedFn) _onForeBackIndexChangedFn(_foreIndex, _backIndex);
 }
 
-function getPaletteIndexFromMouseEvent(event) {
-  // id = 'paletteColor2'
-  const id = event.srcElement.id;
-  const lastChar = id[id.length-1];
-  // lastChar is a one-based offset.
-  return parseInt(lastChar) - 1;
-}
-
 function onPaletteClick(event) {
-  const palIndex = getPaletteIndexFromMouseEvent(event);
+  const palIndex = paletteIndex(event.srcElement.id);
   if (event.altKey) { // option
     ipcRenderer.send('open-color-selector', _palette, palIndex);
   } else {
-    // Set foreground color from clicked palette div.
-    _foreIndex = palIndex;
+    // Set foreground or background color from clicked palette div.
+    if (event.shiftKey) {
+      _backIndex = palIndex;
+    } else {
+      _foreIndex = palIndex;
+    }
+
     setForeBackDivs();
     if (_onForeBackIndexChangedFn) _onForeBackIndexChangedFn(_foreIndex, _backIndex);
   }
@@ -125,3 +93,16 @@ ipcRenderer.on('palette-update', function (event, palette) {
   _palette = palette;
   setPaletteDivs();
 });
+
+/** Called by renderer.js to initialize. */
+exports.init = function() {
+  const elems = domu.getChildElements(document.getElementById('palette'));
+  _palBackElem = elems[0];
+  _palForeElem = elems[1];
+  _palElems = elems.slice(2).reverse();
+
+  setPaletteDivs();
+
+  _palElems.forEach(p => p.addEventListener('click', onPaletteClick));
+  document.getElementById('resetPalette').addEventListener('click', onResetPaletteClick);
+}

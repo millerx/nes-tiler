@@ -6,6 +6,7 @@
 
 const {ipcRenderer} = require('electron');
 const cmn = require('./common.js');
+const domu = require('./domUtils.js');
 
 let _palette = []; // Current palette colors.
 let _palIndex = 0; // Index of currently selected palette color.
@@ -47,22 +48,13 @@ function onPaletteColorClicked(event) {
   selectPalette(palIndex);
 }
 
-function getChildElements(elem) {
-  const children = [];
-  let child = elem.firstElementChild;
-  do {
-    children.push(child);
-  } while (child = child.nextElementSibling);
-  return children;
-}
-
 function init() {
   // colorTable
   document.getElementById('colorTable').addEventListener('click', onColorTableClicked);
 
   // palette
   // Must be reversed since they float right they are declared right-to-left.
-  _palElems = getChildElements(document.getElementById('palette')).reverse();
+  _palElems = domu.getChildElements(document.getElementById('palette')).reverse();
   _palElems.forEach(p => p.addEventListener('click', onPaletteColorClicked));
 }
 init();
