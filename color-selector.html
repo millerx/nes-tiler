@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <!-- TODO: Refactor common code with index.html -->
+  <head>
+    <meta charset="UTF-8">
+    <title>Color Selector</title>
+    <style>
+    body {
+      color: #ffffff;
+      background-color: #000000;
+      font-family: sans-serif;
+      font-weight: bold;
+      font-size: 0.75em;
+    }
+    #palette {
+      width: 280px;
+      height: 100px;
+      position: relative;
+    }
+    .paletteColor {
+      width: 48px;
+      height: 80px;
+      float: right;
+      border: 1px solid white;
+    }
+    .selected {
+      border: 2px solid cyan;
+    }
+    td {
+      width: 16px;
+      height: 16px;
+    }
+    </style>
+  </head>
+  <body>
+    <div id="palette">
+      <!-- float:right so these divs are declared right-to-left. -->
+      <div class="paletteColor" id="paletteColor3"></div>
+      <div class="paletteColor" id="paletteColor2"></div>
+      <div class="paletteColor" id="paletteColor1"></div>
+      <div class="paletteColor" id="paletteColor0"></div>
+    </div>
+    <table id="colorTable">
+      <!-- 2 rows of 8 items -->
+      <tr>
+        <td style="background-color: #000000"/>
+        <td style="background-color: #ffffff"/>
+        <td style="background-color: #ff0000"/>
+        <td style="background-color: #ffff00"/>
+        <td style="background-color: #00ffff"/>
+        <td style="background-color: #ffa500"/>
+        <td style="background-color: #ffc0cb"/>
+        <td style="background-color: #00ff00"/>
+      </tr>
+      <tr>
+          <td style="background-color: #808080"/>
+          <td style="background-color: #d3d3d3"/>
+          <td style="background-color: #8b0000"/>
+          <td style="background-color: #bdb76b"/>
+          <td style="background-color: #0000ff"/>
+          <td style="background-color: #a52a2a"/>
+          <td style="background-color: #800080"/>
+          <td style="background-color: #008000"/>
+        </tr>
+    </table>
+  </body>
+
+  <script>
+    require('./colorSelector.js')
+  </script>
+</html>
