@@ -18,8 +18,9 @@ const tiles = require('./nesRomTiles.js');
  * 100000  50180.8 ms
  */
 
-const TILESET_WIDTH = 40;  // Tiles to draw on a single row.
-const CANVAS_HEIGHT = 1024;  // Pixel height of a canvas that makes up the tileSet.
+const ZOOM_FACTOR = 2;
+const TILESET_WIDTH = ~~(40 / ZOOM_FACTOR);  // Tiles to draw on a single row.
+const CANVAS_HEIGHT = ~~(1024 / ZOOM_FACTOR);  // Pixel height of a canvas that makes up the tileSet.
 const ROM_PARTITION_SIZE = CHR_BYTE_SIZE * TILESET_WIDTH * ~~(CANVAS_HEIGHT / CHR_HEIGHT);
 
 let _rom;  // ROM being viewed.
@@ -56,15 +57,15 @@ function drawRomBuffer(romBuffer, canvas) {
   // Draw off-screen canvas to the scaled on-screen canvas.
   const ctx2 = cmn.getContext2DNA(canvas);
   ctx2.imageSmoothingEnabled = false;
-  //ctx2.scale(2, 2);
+  ctx2.scale(ZOOM_FACTOR, ZOOM_FACTOR);
   ctx2.drawImage(_unscaledCanvas, 0, 0);
 }
 
 /** Creates a canvas element from a ROM buffer. */
 function createTileCanvas(romBuffer) {
   const canvas = document.createElement('canvas');
-  canvas.width = TILESET_WIDTH * CHR_WIDTH;  // 320
-  canvas.height = Math.ceil(romBuffer.length / CHR_BYTE_SIZE / TILESET_WIDTH) * CHR_HEIGHT;
+  canvas.width = TILESET_WIDTH * CHR_WIDTH * ZOOM_FACTOR;  // 320
+  canvas.height = Math.ceil(romBuffer.length / CHR_BYTE_SIZE / TILESET_WIDTH) * CHR_HEIGHT * ZOOM_FACTOR;
   canvas.addEventListener('click', onCanvasClick);
   drawRomBuffer(romBuffer, canvas);
   return canvas;
@@ -126,8 +127,8 @@ function onCanvasClick(event) {
   // pixelInTileXY = mouseEvent.offset* % 8
 
   _selectedCanvas = event.srcElement;
-  const tileX = event.offsetX >> 3;  // Divide by 8
-  const tileY = event.offsetY >> 3;  // Divide by 8
+  const tileX = ~~(event.offsetX / CHR_WIDTH / ZOOM_FACTOR);
+  const tileY = ~~(event.offsetY / CHR_HEIGHT / ZOOM_FACTOR);
   _selectedTileIndex = _selectedCanvas._tileIndex + (tileY * TILESET_WIDTH) + tileX;
   _onSelectedFn(_selectedTileIndex);
 }
