@@ -2,6 +2,7 @@
 
 const {ipcRenderer} = require('electron');
 const cmn = require('./common.js');
+const domu = require('./domUtils.js');
 const nesChr = require('./nesPatternTable.js');
 const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js');
 const tiles = require('./nesRomTiles.js');
@@ -18,10 +19,10 @@ const tiles = require('./nesRomTiles.js');
  * 100000  50180.8 ms
  */
 
-const ZOOM_FACTOR = 2;
-const TILESET_WIDTH = ~~(40 / ZOOM_FACTOR);  // Tiles to draw on a single row.
-const CANVAS_HEIGHT = ~~(1024 / ZOOM_FACTOR);  // Pixel height of a canvas that makes up the tileSet.
-const ROM_PARTITION_SIZE = CHR_BYTE_SIZE * TILESET_WIDTH * ~~(CANVAS_HEIGHT / CHR_HEIGHT);
+let _zoomFactor = 2;
+let _tileSetWidth = 0;  // Tiles to draw on a single row.
+let _canvasHeight = 0;  // Pixel height of a canvas that makes up the tileSet.
+let _romPartitionSize = 0;  // ROM data partitioned per canvas element.
 
 let _rom;  // ROM being viewed.
 let _selectedTileIndex = -1;  // Index of selected tile.  -1 if no tile is selected.
@@ -29,6 +30,13 @@ let _selectedCanvas;  // Canvas element of the selected tile.
 let _palette ;  // Palette [[r,g,b,a]] to draw the file.
 let _unscaledCanvas;  // Offscreen canvas.
 let _onSelectedFn;  // fn(tileBytes)  Function called when a tile is selected.
+
+function setZoomFactor(zf) {
+  _zoomFactor = zf;
+  _tileSetWidth = ~~(40 / _zoomFactor);
+  _canvasHeight = ~~(1024 / _zoomFactor);
+  _romPartitionSize = CHR_BYTE_SIZE * _tileSetWidth * ~~(_canvasHeight / CHR_HEIGHT);
+}
 
 /** Not used but keeping for debugging. */
 function drawGreenBox(canvas, x, y) {
@@ -48,7 +56,7 @@ function drawRomBuffer(romBuffer, canvas) {
     // TODO: Reuse the same tile buffer instead of creating one with every call to deinterlaceTile.
     const tileBytes = romBuffer.slice(i, i+CHR_BYTE_SIZE);
     const tile = nesChr.deinterlaceTile(tileBytes);
-    cmn.writeImageData(imgData, tile, (ti % TILESET_WIDTH), ~~(ti / TILESET_WIDTH), _palette);
+    cmn.writeImageData(imgData, tile, (ti % _tileSetWidth), ~~(ti / _tileSetWidth), _palette);
     ++ti;
   }
 
@@ -56,17 +64,18 @@ function drawRomBuffer(romBuffer, canvas) {
 
   // Draw off-screen canvas to the scaled on-screen canvas.
   const ctx2 = cmn.getContext2DNA(canvas);
-  ctx2.imageSmoothingEnabled = false;
-  ctx2.scale(ZOOM_FACTOR, ZOOM_FACTOR);
   ctx2.drawImage(_unscaledCanvas, 0, 0);
 }
 
 /** Creates a canvas element from a ROM buffer. */
 function createTileCanvas(romBuffer) {
   const canvas = document.createElement('canvas');
-  canvas.width = TILESET_WIDTH * CHR_WIDTH * ZOOM_FACTOR;  // 320
-  canvas.height = Math.ceil(romBuffer.length / CHR_BYTE_SIZE / TILESET_WIDTH) * CHR_HEIGHT * ZOOM_FACTOR;
+  canvas.width = _tileSetWidth * CHR_WIDTH * _zoomFactor;  // 320
+  canvas.height = Math.ceil(romBuffer.length / CHR_BYTE_SIZE / _tileSetWidth) * CHR_HEIGHT * _zoomFactor;
   canvas.addEventListener('click', onCanvasClick);
+  const ctx = cmn.getContext2DNA(canvas);
+  ctx.imageSmoothingEnabled = false;
+  ctx.scale(_zoomFactor, _zoomFactor);
   drawRomBuffer(romBuffer, canvas);
   return canvas;
 }
@@ -75,8 +84,8 @@ function createTileCanvas(romBuffer) {
 function* partitionRomBufferForCanvases() {
   let dataOffset = _rom.dataOffset;
   while (dataOffset < _rom.buffer.length) {
-    yield _rom.buffer.slice(dataOffset, dataOffset + ROM_PARTITION_SIZE);
-    dataOffset += ROM_PARTITION_SIZE;
+    yield _rom.buffer.slice(dataOffset, dataOffset + _romPartitionSize);
+    dataOffset += _romPartitionSize;
   }
 }
 
@@ -88,7 +97,7 @@ function drawTileSet() {
     const canvas = createTileCanvas(romChunk);
     canvas._tileIndex = tileIndex;
     tileSetDiv.appendChild(canvas);
-    tileIndex += ~~(ROM_PARTITION_SIZE / CHR_BYTE_SIZE);
+    tileIndex += ~~(_romPartitionSize / CHR_BYTE_SIZE);
   }
 }
 
@@ -112,8 +121,8 @@ function drawSelectedTile(tile) {
   cmn.writeImageData(imgData, tile, 0, 0, _palette);
 
   const tileIndex = _selectedTileIndex - _selectedCanvas._tileIndex;
-  const x = (tileIndex % TILESET_WIDTH) * CHR_WIDTH;
-  const y = ~~(tileIndex / TILESET_WIDTH) * CHR_HEIGHT;
+  const x = (tileIndex % _tileSetWidth) * CHR_WIDTH;
+  const y = ~~(tileIndex / _tileSetWidth) * CHR_HEIGHT;
   ctx.putImageData(imgData, x, y);
 }
 
@@ -127,17 +136,50 @@ function onCanvasClick(event) {
   // pixelInTileXY = mouseEvent.offset* % 8
 
   _selectedCanvas = event.srcElement;
-  const tileX = ~~(event.offsetX / CHR_WIDTH / ZOOM_FACTOR);
-  const tileY = ~~(event.offsetY / CHR_HEIGHT / ZOOM_FACTOR);
-  _selectedTileIndex = _selectedCanvas._tileIndex + (tileY * TILESET_WIDTH) + tileX;
+  const tileX = ~~(event.offsetX / CHR_WIDTH / _zoomFactor);
+  const tileY = ~~(event.offsetY / CHR_HEIGHT / _zoomFactor);
+  _selectedTileIndex = _selectedCanvas._tileIndex + (tileY * _tileSetWidth) + tileX;
   _onSelectedFn(_selectedTileIndex);
+}
+
+/** Remove canvas elements under the tileSetWindow. */
+function removeCanvases() {
+  domu.getChildElements(
+    document.getElementById('tileSetWindow'))
+    .forEach(c => c.remove());
+}
+
+/** Changes the zoom factor and redraws the tileSet. */
+function onZoomClick(event) {
+  // Parse the # from 'zoom1x'
+  const zoomFactor = parseInt(event.srcElement.id.substr(-2, 1));
+  if (zoomFactor === _zoomFactor) return;
+
+  setZoomFactor(zoomFactor);
+  _unscaledCanvas = createUnscaledCanvas();
+  removeCanvases(); // TODO: Reuse existing canvases?
+  drawTileSet();
+}
+
+function createUnscaledCanvas() {
+  const canvas = document.createElement('canvas');
+  canvas.width = _tileSetWidth * CHR_WIDTH;
+  canvas.height = _canvasHeight;
+  return canvas;
 }
 
 /** Called by renderer.js to initialize. */
 exports.init = function() {
+  setZoomFactor(2);
+  _unscaledCanvas = createUnscaledCanvas();
+
   _unscaledCanvas = document.createElement('canvas');
-  _unscaledCanvas.width = TILESET_WIDTH * CHR_WIDTH;
-  _unscaledCanvas.height = CANVAS_HEIGHT;
+  _unscaledCanvas.width = _tileSetWidth * CHR_WIDTH;
+  _unscaledCanvas.height = _canvasHeight;
+
+  document.getElementById('zoom1x').addEventListener('click', onZoomClick);
+  document.getElementById('zoom2x').addEventListener('click', onZoomClick);
+  document.getElementById('zoom4x').addEventListener('click', onZoomClick);
 }
 
 /** Set function called when tile is selected. */

@@ -13,7 +13,7 @@ let _palIndex = 0; // Index of currently selected palette color.
 let _palElems; // Array of DOM elements the palette.
 
 function paletteIndex(id) {
-  return id.substr(-1);
+  return parseInt(id.substr(-1));
 }
 
 function setPalette(palette) {
