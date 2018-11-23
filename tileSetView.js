@@ -26,6 +26,7 @@ let _rom;  // ROM being viewed.
 let _selectedTileIndex = -1;  // Index of selected tile.  -1 if no tile is selected.
 let _selectedCanvas;  // Canvas element of the selected tile.
 let _palette ;  // Palette [[r,g,b,a]] to draw the file.
+let _unscaledCanvas;  // Offscreen canvas.
 let _onSelectedFn;  // fn(tileBytes)  Function called when a tile is selected.
 
 /** Not used but keeping for debugging. */
@@ -36,8 +37,8 @@ function drawGreenBox(canvas, x, y) {
 }
 
 function drawRomBuffer(romBuffer, canvas) {
-  const ctx = cmn.getContext2DNA(canvas);
-  const imgData = ctx.createImageData(canvas.width, canvas.height);
+  const ctx = cmn.getContext2DNA(_unscaledCanvas);
+  const imgData = ctx.createImageData(_unscaledCanvas.width, _unscaledCanvas.height);
 
   let ti = 0;
   for (let i = 0; i < romBuffer.length; i += CHR_BYTE_SIZE) {
@@ -51,6 +52,12 @@ function drawRomBuffer(romBuffer, canvas) {
   }
 
   ctx.putImageData(imgData, 0, 0);
+
+  // Draw off-screen canvas to the scaled on-screen canvas.
+  const ctx2 = cmn.getContext2DNA(canvas);
+  ctx2.imageSmoothingEnabled = false;
+  //ctx2.scale(2, 2);
+  ctx2.drawImage(_unscaledCanvas, 0, 0);
 }
 
 /** Creates a canvas element from a ROM buffer. */
@@ -127,6 +134,9 @@ function onCanvasClick(event) {
 
 /** Called by renderer.js to initialize. */
 exports.init = function() {
+  _unscaledCanvas = document.createElement('canvas');
+  _unscaledCanvas.width = TILESET_WIDTH * CHR_WIDTH;
+  _unscaledCanvas.height = CANVAS_HEIGHT;
 }
 
 /** Set function called when tile is selected. */

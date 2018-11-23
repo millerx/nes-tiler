@@ -41,7 +41,7 @@
       border: 1px solid white;
     }
     .buttonLikeText {
-      cursor: default
+      cursor:pointer
     }
     .buttonLikeText:hover {
       color: cyan
@@ -50,7 +50,10 @@
   </head>
   <body>
     <div class="leftSide">
-      Tile Set
+      Tile Set&nbsp;&nbsp;
+      [<span class="buttonLikeText" id="zoom1x">1x</span>
+      <span class="buttonLikeText" id="zoom2x">2x</span>
+      <span class="buttonLikeText" id="zoom4x">4x</span>]
       <div id="tileSetWindow" style="width:400px; height:90%; overflow:auto;">
         <!-- overflow:auto allows scrolling. -->
       </div>
