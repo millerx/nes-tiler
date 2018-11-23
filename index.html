@@ -16,11 +16,6 @@
       height: 100vh;
       background-color: #000000;
     }
-    .tileSetWindow {
-      width: 400px;
-      height: 90%;
-      overflow: auto;
-    }
     .rightSide {
       float: right;
       width: 47%;
@@ -56,10 +51,8 @@
   <body>
     <div class="leftSide">
       Tile Set
-      <div class="tileSetWindow">
-        <!-- Height specified on canvas is the full height.  Height specified in tileSetWindow
-        is the viewport.  With overflow:auto This allows scrolling. -->
-        <canvas id="tileSetCanvas" width="400" height="1024"></canvas>
+      <div id="tileSetWindow" style="width:400px; height:90%; overflow:auto;">
+        <!-- overflow:auto allows scrolling. -->
       </div>
     </div>
     <div class="rightSide">
