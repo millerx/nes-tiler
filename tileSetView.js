@@ -31,7 +31,8 @@ let _palette ;  // Palette [[r,g,b,a]] to draw the file.
 let _unscaledCanvas;  // Offscreen canvas.
 let _onSelectedFn;  // fn(tileBytes)  Function called when a tile is selected.
 
-function setZoomFactor(zf) {
+/** Calculates module fields based off the given zoom factor. */
+function calcZoomFactor(zf) {
   _zoomFactor = zf;
   _tileSetWidth = ~~(40 / _zoomFactor);
   _canvasHeight = ~~(1024 / _zoomFactor);
@@ -53,7 +54,7 @@ function drawRomBuffer(romBuffer, canvas) {
   for (let i = 0; i < romBuffer.length; i += CHR_BYTE_SIZE) {
     // TODO: Remove the slice below by passing in an offset to deinterlaceTile and have it read
     // no more then CHR_BYTE_SIZE.
-    // TODO: Reuse the same tile buffer instead of creating one with every call to deinterlaceTile.
+    // TODO: Re-use the same tile buffer instead of creating one with every call to deinterlaceTile.
     const tileBytes = romBuffer.slice(i, i+CHR_BYTE_SIZE);
     const tile = nesChr.deinterlaceTile(tileBytes);
     cmn.writeImageData(imgData, tile, (ti % _tileSetWidth), ~~(ti / _tileSetWidth), _palette);
@@ -115,15 +116,20 @@ function redrawTileSet() {
 function drawSelectedTile(tile) {
   if (!_selectedCanvas) return;
 
-  const ctx = cmn.getContext2DNA(_selectedCanvas);
+  const ctx = cmn.getContext2DNA(_unscaledCanvas);
   const imgData = ctx.createImageData(CHR_WIDTH, CHR_HEIGHT);
 
   cmn.writeImageData(imgData, tile, 0, 0, _palette);
+  ctx.putImageData(imgData, 0, 0);
 
+  // Draw off-screen canvas to the scaled on-screen canvas.
+  const ctx2 = cmn.getContext2DNA(_selectedCanvas);
   const tileIndex = _selectedTileIndex - _selectedCanvas._tileIndex;
   const x = (tileIndex % _tileSetWidth) * CHR_WIDTH;
   const y = ~~(tileIndex / _tileSetWidth) * CHR_HEIGHT;
-  ctx.putImageData(imgData, x, y);
+  ctx2.drawImage(_unscaledCanvas,
+    0, 0, CHR_WIDTH, CHR_HEIGHT, // src
+    x, y, CHR_WIDTH, CHR_HEIGHT); // dest
 }
 
 /** Look up selected tile and call the onSelected function. */
@@ -154,11 +160,28 @@ function onZoomClick(event) {
   // Parse the # from 'zoom1x'
   const zoomFactor = parseInt(event.srcElement.id.substr(-2, 1));
   if (zoomFactor === _zoomFactor) return;
+  // Change CSS classes to show which zoom factor is selected.
+  event.srcElement.className = 'buttonLikeSelectedText';
+  document.getElementById(`zoom${_zoomFactor}x`).className = 'buttonLikeText';
 
-  setZoomFactor(zoomFactor);
+  const tileSetWindow = document.getElementById('tileSetWindow');
+  const scrollTop = tileSetWindow.scrollTop;
+  const zoomRatio = zoomFactor / _zoomFactor;
+
+  calcZoomFactor(zoomFactor);
   _unscaledCanvas = createUnscaledCanvas();
-  removeCanvases(); // TODO: Reuse existing canvases?
+  removeCanvases(); // TODO: Re-use existing canvases?
+  if (!_rom) return;
   drawTileSet();
+
+  // HACK: Finely tuned to continue looking at the middle tiles after zoom.
+  if (zoomRatio > 3) {
+    tileSetWindow.scrollTop = (scrollTop * zoomRatio * zoomRatio) + (tileSetWindow.clientHeight * 7);
+  } else if (zoomRatio > 1) {
+    tileSetWindow.scrollTop = (scrollTop * zoomRatio * zoomRatio) + (tileSetWindow.clientHeight * 1.5);
+  } else { // zoomRatio < 1
+    tileSetWindow.scrollTop = (scrollTop * zoomRatio * zoomRatio) - (tileSetWindow.clientHeight * zoomRatio);
+  }
 }
 
 function createUnscaledCanvas() {
@@ -170,7 +193,8 @@ function createUnscaledCanvas() {
 
 /** Called by renderer.js to initialize. */
 exports.init = function() {
-  setZoomFactor(2);
+  calcZoomFactor(2);
+  document.getElementById('zoom2x').className = 'buttonLikeSelectedText';
   _unscaledCanvas = createUnscaledCanvas();
 
   _unscaledCanvas = document.createElement('canvas');
@@ -192,6 +216,9 @@ exports.loadROM = function(rom) {
   _rom = rom;
   _selectedTileIndex = -1;  // Reset in case this is not the first ROM we have opened.
   _selectedCanvas = null;
+
+  // TODO: Re-use canvases?
+  removeCanvases();
   drawTileSet();
 }
 
