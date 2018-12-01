@@ -19,13 +19,13 @@ const tiles = require('./nesRomTiles.js');
  * 100000  50180.8 ms
  */
 
+let _appState = {};
+
 let _zoomFactor = 2;
 let _tileSetWidth = 0;  // Tiles to draw on a single row.
 let _canvasHeight = 0;  // Pixel height of a canvas that makes up the tileSet.
 let _romPartitionSize = 0;  // ROM data partitioned per canvas element.
 
-let _rom;  // ROM being viewed.
-let _selectedTileIndex = -1;  // Index of selected tile.  -1 if no tile is selected.
 let _selectedCanvas;  // Canvas element of the selected tile.
 let _palette ;  // Palette [[r,g,b,a]] to draw the file.
 let _unscaledCanvas;  // Offscreen canvas.
@@ -83,14 +83,14 @@ function createTileCanvas(romBuffer) {
 
 /** Generator that partition's the ROM's buffer into chunks to be rendered in canvases. */
 function* partitionRomBufferForCanvases() {
-  let dataOffset = _rom.dataOffset;
-  while (dataOffset < _rom.buffer.length) {
-    yield _rom.buffer.slice(dataOffset, dataOffset + _romPartitionSize);
+  let dataOffset = _appState.rom.dataOffset;
+  while (dataOffset < _appState.rom.buffer.length) {
+    yield _appState.rom.buffer.slice(dataOffset, dataOffset + _romPartitionSize);
     dataOffset += _romPartitionSize;
   }
 }
 
-/** Draws the entire tile set from _rom. Creates canvas elements. */
+/** Draws the entire tile set from ROM. Creates canvas elements. */
 function drawTileSet() {
   const tileSetDiv = document.getElementById('tileSetWindow');
   let tileIndex = 0;
@@ -124,7 +124,7 @@ function drawSelectedTile(tile) {
 
   // Draw off-screen canvas to the scaled on-screen canvas.
   const ctx2 = cmn.getContext2DNA(_selectedCanvas);
-  const tileIndex = _selectedTileIndex - _selectedCanvas._tileIndex;
+  const tileIndex = _appState.selectedTileIndex - _selectedCanvas._tileIndex;
   const x = (tileIndex % _tileSetWidth) * CHR_WIDTH;
   const y = ~~(tileIndex / _tileSetWidth) * CHR_HEIGHT;
   ctx2.drawImage(_unscaledCanvas,
@@ -135,7 +135,7 @@ function drawSelectedTile(tile) {
 /** Look up selected tile and call the onSelected function. */
 function onCanvasClick(event) {
   if (!_onSelectedFn) return;
-  if (!_rom) return;
+  if (!_appState.rom) return;
 
   // pixelXY = mouseEvent.offset*
   // tileXY = mouseEvent.offset* >> 3 // Div 8
@@ -144,8 +144,8 @@ function onCanvasClick(event) {
   _selectedCanvas = event.srcElement;
   const tileX = ~~(event.offsetX / CHR_WIDTH / _zoomFactor);
   const tileY = ~~(event.offsetY / CHR_HEIGHT / _zoomFactor);
-  _selectedTileIndex = _selectedCanvas._tileIndex + (tileY * _tileSetWidth) + tileX;
-  _onSelectedFn(_selectedTileIndex);
+  _appState.selectedTileIndex = _selectedCanvas._tileIndex + (tileY * _tileSetWidth) + tileX;
+  _onSelectedFn(_appState.selectedTileIndex);
 }
 
 /** Remove canvas elements under the tileSetWindow. */
@@ -171,7 +171,7 @@ function onZoomClick(event) {
   calcZoomFactor(zoomFactor);
   _unscaledCanvas = createUnscaledCanvas();
   removeCanvases(); // TODO: Re-use existing canvases?
-  if (!_rom) return;
+  if (!_appState.rom) return;
   drawTileSet();
 
   // HACK: Finely tuned to continue looking at the middle tiles after zoom.
@@ -192,7 +192,9 @@ function createUnscaledCanvas() {
 }
 
 /** Called by renderer.js to initialize. */
-exports.init = function() {
+exports.init = function(appState) {
+  _appState = appState;
+
   calcZoomFactor(2);
   document.getElementById('zoom2x').className = 'buttonLikeSelectedText';
   _unscaledCanvas = createUnscaledCanvas();
@@ -212,9 +214,7 @@ exports.onSelected = function(fn) {
 }
 
 /** Loads and displays the tileset of the given ROM. */
-exports.loadROM = function(rom) {
-  _rom = rom;
-  _selectedTileIndex = -1;  // Reset in case this is not the first ROM we have opened.
+exports.loadROM = function() {
   _selectedCanvas = null;
 
   // TODO: Re-use canvases?
@@ -222,14 +222,14 @@ exports.loadROM = function(rom) {
   drawTileSet();
 }
 
-exports.updateTile = function(tileIndex) {
-  const tile = tiles.readTile(_rom, tileIndex);
+exports.tileDataChanged = function() {
+  const tile = tiles.readTile(_appState.rom, _appState.selectedTileIndex);
   drawSelectedTile(tile);
 }
 
 exports.setPalette = function(palette) {
   _palette = palette;
-  if (_rom) redrawTileSet();
+  if (_appState.rom) redrawTileSet();
 }
 
 ipcRenderer.on('palette-update', function (event, palette) {
