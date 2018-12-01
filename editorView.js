@@ -15,9 +15,6 @@ let _unscaledCanvas;  // Offscreen canvas.
 let _mouseDown = false;  // Is the mouse currently pressed down?
 let _tile;  // Deinterlaced tile.
 let _onTileDataChangedFn;  // Called when tile data has changed.
-let _palette;  // Palette [[r,g,b,a]] to draw the file.
-let _forePalIndex = 3;  // Palette index of the forebround color.
-let _backPalIndex = 0;  // Palette index of the background color.
 
 /** Called by renderer.js to initialize. */
 exports.init = function(appState) {
@@ -86,7 +83,7 @@ function drawEditorView(tile) {
   // getContext with {alpha: false} is important here because we re-draw over the old tile.
   let ctx = cmn.getContext2DNA(_unscaledCanvas);
   let imgData = ctx.createImageData(CHR_WIDTH, CHR_HEIGHT);
-  cmn.writeImageData(imgData, tile, 0, 0, _palette);
+  cmn.writeImageData(imgData, tile, 0, 0, _appState.palette.data);
   ctx.putImageData(imgData, 0, 0);
 
   // Draw off-screen canvas to the scaled on-screen canvas.
@@ -110,7 +107,7 @@ function onMouseMove(mouseEvent) {
   const uy = ~~(y / EDITOR_SCALE);
 
   // Erase if Option+Click
-  const palNum = mouseEvent.altKey ? _backPalIndex : _forePalIndex;
+  const palNum = mouseEvent.altKey ? _appState.palette.backIndex : _appState.palette.foreIndex;
 
   const tileColor = _tile[uy * CHR_WIDTH + ux];
   if (tileColor != palNum) {
@@ -137,22 +134,11 @@ function drawPixel(ux, uy, palNum) {
   // Draw a 1x1 fillRect direclty on the scaled canvas.
   const canvas = document.getElementById('editorCanvas');
   let ctx = cmn.getContext2DNA(canvas);
-  ctx.fillStyle = cmn.toCSSColorStr(_palette[palNum]);
+  ctx.fillStyle = cmn.toCSSColorStr(_appState.palette.data[palNum]);
   ctx.fillRect(ux, uy, 1, 1);
 }
 
-/** Sets the palette of form [[r,g,b,a]]. */
-exports.setPalette = function(palette) {
-  _palette = palette;
+/** Re-draws with the new palette */
+exports.paletteChanged = function() {
   if (_tile) drawEditorView(_tile);
 }
-
-/** Sets the foreground and background palette index. */
-exports.setForeBackPaletteIndex = function(forePalIndex, backPalIndex) {
-  _forePalIndex = forePalIndex;
-  _backPalIndex = backPalIndex;
-}
-
-ipcRenderer.on('palette-update', function (event, palette) {
-  exports.setPalette(palette);
-});

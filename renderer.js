@@ -15,6 +15,11 @@ let _appState = {
   rom: null,
   selectedTileIndex: -1,  // Index of selected tile.  -1 if no tile is selected.
   isDirty: false,  // True if the ROM has been updated since last save.
+  palette: {
+    data: paletteView.getDefaultPalette(),
+    foreIndex: 3,
+    backIndex: 0,
+  }
 }
 
 /**
@@ -29,17 +34,10 @@ function init() {
   // Wire up events.
   tileSetView.onSelected(editorView.selectedTileChanged);
   editorView.onTileDataChanged(tileSetView.tileDataChanged);
-  paletteView.onPaletteChanged(function (palette) {
-    editorView.setPalette(palette);
-    tileSetView.setPalette(palette);
+  paletteView.onPaletteChanged(function () {
+    editorView.paletteChanged();
+    tileSetView.paletteChanged();
   });
-  paletteView.onForeBackIndexChanged(editorView.setForeBackPaletteIndex);
-
-  // Set palette for the first time.
-  editorView.setPalette(paletteView.getPalette());
-  tileSetView.setPalette(paletteView.getPalette());
-  // Set the editor's foreground/background palette index for the first time.
-  editorView.setForeBackPaletteIndex(paletteView.getForegroundIndex(), paletteView.getBackgroundIndex());
 }
 init();
 

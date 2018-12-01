@@ -5,16 +5,14 @@ const cmn = require('./common.js');
 const domu = require('./domUtils.js');
 const {ipcRenderer} = require('electron');
 
-const defaultPalette = [  // Array of colors.  Each color is an rgba array.  [[r,g,b,a]]
+const _defaultPalette = [  // Array of colors.  Each color is an rgba array.  [[r,g,b,a]]
   [0, 0, 0, 255], // black
   [255, 0, 0, 255], // red
   [0, 0, 255, 255], // blue
   [255, 255, 255, 255]]; // white
-let _palette = defaultPalette.slice();  // Clone defaultPalette
-let _foreIndex = 3;
-let _backIndex = 0;
-let _onPaletteChangedFn;  // fn(palette)  Function called when the palette has changed.
-let _onForeBackIndexChangedFn;  // fn(foreIndex, backIndex)  Function called when either the foreground or background palette index has changed.
+
+let _appState = {};
+let _onPaletteChangedFn;  // Called when the palette has changed.
 let _palForeElem;
 let _palBackElem;
 let _palElems = [];
@@ -22,13 +20,16 @@ let _palElems = [];
 
 /** Sets the colors of the foreground and background divs. */
 function setForeBackDivs() {
-  _palBackElem.style.backgroundColor = cmn.toCSSColorStr(_palette[_backIndex]);
-  _palForeElem.style.backgroundColor = cmn.toCSSColorStr(_palette[_foreIndex]);
+  const backColor = _appState.palette.data[_appState.palette.backIndex];
+  _palBackElem.style.backgroundColor = cmn.toCSSColorStr(backColor);
+
+  const foreColor = _appState.palette.data[_appState.palette.foreIndex];
+  _palForeElem.style.backgroundColor = cmn.toCSSColorStr(foreColor);
 }
 
 /** Sets the colors of all the divs. */
 function setPaletteDivs() {
-  _palette.forEach((color,i) => _palElems[i].style.backgroundColor = cmn.toCSSColorStr(color));
+  _appState.palette.data.forEach((color,i) => _palElems[i].style.backgroundColor = cmn.toCSSColorStr(color));
   setForeBackDivs();
 }
 
@@ -36,66 +37,54 @@ function paletteIndex(id) {
   return id.substr(-1);
 }
 
-/** Returns the current palette [[r,g,b,a]] */
-exports.getPalette = function() {
-	return _palette;
+/** Returns the default palette [[r,g,b,a]] */
+exports.getDefaultPalette = function() {
+	return _defaultPalette;
 }
 
 exports.onPaletteChanged = function(fn) {
   _onPaletteChangedFn = fn;
 }
 
-exports.getForegroundIndex = function() {
-  return _foreIndex;
-}
-
-exports.getBackgroundIndex = function() {
-  return _backIndex;
-}
-
-exports.onForeBackIndexChanged = function(fn) {
-  _onForeBackIndexChangedFn = fn;
-}
-
 exports.swapForeBackColors = function() {
-  const tmp = _foreIndex;
-  _foreIndex = _backIndex;
-  _backIndex = tmp;
+  const foreIndex = _appState.palette.foreIndex;
+  _appState.palette.foreIndex = _appState.palette.backIndex;
+  _appState.palette.backIndex = foreIndex;
 
   setForeBackDivs()
-  if (_onForeBackIndexChangedFn) _onForeBackIndexChangedFn(_foreIndex, _backIndex);
 }
 
 function onPaletteClick(event) {
   const palIndex = paletteIndex(event.srcElement.id);
   if (event.altKey) { // option
-    ipcRenderer.send('open-color-selector', _palette, palIndex);
+    ipcRenderer.send('open-color-selector', _appState.palette.data, palIndex);
   } else {
     // Set foreground or background color from clicked palette div.
     if (event.shiftKey) {
-      _backIndex = palIndex;
+      _appState.palette.backIndex = palIndex;
     } else {
-      _foreIndex = palIndex;
+      _appState.palette.foreIndex = palIndex;
     }
-
     setForeBackDivs();
-    if (_onForeBackIndexChangedFn) _onForeBackIndexChangedFn(_foreIndex, _backIndex);
   }
 }
 
 function onResetPaletteClick(event) {
-  _palette = defaultPalette.slice();
+  _appState.palette.data = _defaultPalette.slice();
   setPaletteDivs();
-  if (_onPaletteChangedFn) _onPaletteChangedFn(_palette);
+  if (_onPaletteChangedFn) _onPaletteChangedFn();
 }
 
 ipcRenderer.on('palette-update', function (event, palette) {
-  _palette = palette;
+  _appState.palette.data = palette;
   setPaletteDivs();
+  if (_onPaletteChangedFn) _onPaletteChangedFn();
 });
 
 /** Called by renderer.js to initialize. */
-exports.init = function() {
+exports.init = function(appState) {
+  _appState = appState;
+
   const elems = domu.getChildElements(document.getElementById('palette'));
   _palBackElem = elems[0];
   _palForeElem = elems[1];

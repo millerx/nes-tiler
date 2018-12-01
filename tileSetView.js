@@ -27,7 +27,6 @@ let _canvasHeight = 0;  // Pixel height of a canvas that makes up the tileSet.
 let _romPartitionSize = 0;  // ROM data partitioned per canvas element.
 
 let _selectedCanvas;  // Canvas element of the selected tile.
-let _palette ;  // Palette [[r,g,b,a]] to draw the file.
 let _unscaledCanvas;  // Offscreen canvas.
 let _onSelectedFn;  // fn(tileBytes)  Function called when a tile is selected.
 
@@ -57,7 +56,7 @@ function drawRomBuffer(romBuffer, canvas) {
     // TODO: Re-use the same tile buffer instead of creating one with every call to deinterlaceTile.
     const tileBytes = romBuffer.slice(i, i+CHR_BYTE_SIZE);
     const tile = nesChr.deinterlaceTile(tileBytes);
-    cmn.writeImageData(imgData, tile, (ti % _tileSetWidth), ~~(ti / _tileSetWidth), _palette);
+    cmn.writeImageData(imgData, tile, (ti % _tileSetWidth), ~~(ti / _tileSetWidth), _appState.palette.data);
     ++ti;
   }
 
@@ -119,7 +118,7 @@ function drawSelectedTile(tile) {
   const ctx = cmn.getContext2DNA(_unscaledCanvas);
   const imgData = ctx.createImageData(CHR_WIDTH, CHR_HEIGHT);
 
-  cmn.writeImageData(imgData, tile, 0, 0, _palette);
+  cmn.writeImageData(imgData, tile, 0, 0, _appState.palette.data);
   ctx.putImageData(imgData, 0, 0);
 
   // Draw off-screen canvas to the scaled on-screen canvas.
@@ -227,11 +226,6 @@ exports.tileDataChanged = function() {
   drawSelectedTile(tile);
 }
 
-exports.setPalette = function(palette) {
-  _palette = palette;
+exports.paletteChanged = function() {
   if (_appState.rom) redrawTileSet();
 }
-
-ipcRenderer.on('palette-update', function (event, palette) {
-  exports.setPalette(palette);
-});
