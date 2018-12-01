@@ -14,7 +14,6 @@ let _appState = {};
 let _unscaledCanvas;  // Offscreen canvas.
 let _mouseDown = false;  // Is the mouse currently pressed down?
 let _tile;  // Deinterlaced tile.
-let _isROMDirty = false;  // True if the ROM has been updated since last save.
 let _onTileDataChangedFn;  // Called when tile data has changed.
 let _palette;  // Palette [[r,g,b,a]] to draw the file.
 let _forePalIndex = 3;  // Palette index of the forebround color.
@@ -63,18 +62,9 @@ exports.onTileDataChanged = function(fn) {
 exports.loadROM = function() {
   // Reset in case this is not the first ROM we have loaded.
   _tile = null;
-  _isROMDirty = false;
 
   // Clear the canvas in case this is not the first ROM we have loaded.
   clearEditorView();
-}
-
-exports.isROMDirty = function() {
-  return _isROMDirty;
-}
-
-exports.clearROMDirty = function() {
-  _isROMDirty = false;
 }
 
 /** Loads a tile into the Editor View. */
@@ -133,7 +123,7 @@ function changePixel(ux, uy, palNum) {
   _tile[uy * CHR_WIDTH + ux] = palNum;
 
   tiles.writeTile(_appState.rom, _tile, _appState.selectedTileIndex);
-  _isROMDirty = true;
+  _appState.isDirty = true;
 
   drawPixel(ux, uy, palNum);
 

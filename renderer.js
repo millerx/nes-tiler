@@ -14,6 +14,7 @@ let _appState = {
   openFileName: null,
   rom: null,
   selectedTileIndex: -1,  // Index of selected tile.  -1 if no tile is selected.
+  isDirty: false,  // True if the ROM has been updated since last save.
 }
 
 /**
@@ -46,7 +47,7 @@ init();
  * Open ROM event from menu.
  */
 ipcRenderer.on('openROM', function (event) {
-  if (editorView.isROMDirty()) {
+  if (_appState.isDirty) {
     const ret = dialogs.showUnsavedChangesPrompt();
     if (ret === dialogs.DLG_CANCEL) return;
     if (ret === dialogs.DLG_SAVE) saveROM(null, false);
@@ -70,7 +71,7 @@ ipcRenderer.on('openROM', function (event) {
  * Save or SaveAs ROM event from menu.
  */
 function saveROM(event, saveAs) {
-  if (!editorView.isROMDirty()) return;
+  if (!_appState.isDirty) return;
 
   console.log('Saving ROM.')
   let fileName = _appState.openFileName;
@@ -84,7 +85,7 @@ function saveROM(event, saveAs) {
   console.log('Saved ROM '+fileName);
 
   _appState.openFileName = fileName;
-  editorView.clearROMDirty();
+  _appState.isDirty = false;
 }
 ipcRenderer.on('saveROM', saveROM);
 
