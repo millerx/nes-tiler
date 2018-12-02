@@ -5,32 +5,26 @@
 const {ipcRenderer} = require('electron');
 const cmn = require('./common.js');
 const {CHR_WIDTH, CHR_HEIGHT} = require('./nesPatternTable.js');
-const tiles = require('./nesRomTiles.js');
+const nesTiles = require('./nesRomTiles.js');
 
 const EDITOR_SCALE = 16;
 
+let _appState = {};
+
 let _unscaledCanvas;  // Offscreen canvas.
 let _mouseDown = false;  // Is the mouse currently pressed down?
-let _rom;  // ROM being edited.
-let _tileIndex = -1;  // Index of tile being edited.
 let _tile;  // Deinterlaced tile.
-let _isROMDirty = false;  // True if the ROM has been updated since last save.
-let _onTileChangedFn;  // fn(tileBytes) Function called when a tile has changed.
-let _palette;  // Palette [[r,g,b,a]] to draw the file.
-let _forePalIndex = 3;  // Palette index of the forebround color.
-let _backPalIndex = 0;  // Palette index of the background color.
+let _onTileDataChangedFn;  // Called when tile data has changed.
 
-/**
- * Called by renderer.js to initialize.
- */
-exports.init = function() {
-  initEditorCanvas()
-  _unscaledCanvas = createUnscaledCanvas()
+/** Called by renderer.js to initialize. */
+exports.init = function(appState) {
+  _appState = appState;
+
+  initEditorCanvas();
+  _unscaledCanvas = createUnscaledCanvas();
 }
 
-/**
- * Initialize visible canvas.
- */
+/** Initialize visible canvas. */
 function initEditorCanvas() {
   let canvas = document.getElementById('editorCanvas');
   // Resize the canvas.
@@ -58,35 +52,21 @@ function createUnscaledCanvas() {
   return canvas;
 }
 
-exports.onTileChanged = function(fn) {
-  _onTileChangedFn = fn;
+exports.onTileDataChanged = function(fn) {
+  _onTileDataChangedFn = fn;
 }
 
-exports.loadROM = function(rom) {
-  _rom = rom;
+exports.loadROM = function() {
   // Reset in case this is not the first ROM we have loaded.
-  _tileIndex = -1;
   _tile = null;
-  _isROMDirty = false;
 
   // Clear the canvas in case this is not the first ROM we have loaded.
   clearEditorView();
 }
 
-exports.isROMDirty = function() {
-  return _isROMDirty;
-}
-
-exports.clearROMDirty = function() {
-  _isROMDirty = false;
-}
-
-/**
- * Loads a tile into the Editor View.
- */
-exports.editTile = function(tileIndex) {
-  _tileIndex = tileIndex;
-  _tile = tiles.readTile(_rom, _tileIndex);
+/** Loads a tile into the Editor View. */
+exports.selectedTileChanged = function() {
+  _tile = nesTiles.readTile(_appState.rom, _appState.selectedTileIndex);
   drawEditorView(_tile);
 }
 
@@ -103,7 +83,7 @@ function drawEditorView(tile) {
   // getContext with {alpha: false} is important here because we re-draw over the old tile.
   let ctx = cmn.getContext2DNA(_unscaledCanvas);
   let imgData = ctx.createImageData(CHR_WIDTH, CHR_HEIGHT);
-  cmn.writeImageData(imgData, tile, 0, 0, _palette);
+  cmn.writeImageData(imgData, tile, 0, 0, _appState.palette.data);
   ctx.putImageData(imgData, 0, 0);
 
   // Draw off-screen canvas to the scaled on-screen canvas.
@@ -114,7 +94,7 @@ function drawEditorView(tile) {
 
 function onMouseMove(mouseEvent) {
   if (!_mouseDown) return;
-  if (!_rom) return;
+  if (!_appState.rom) return;
 
   // Mouse coordinates are in screen coordinates.
 
@@ -127,7 +107,7 @@ function onMouseMove(mouseEvent) {
   const uy = ~~(y / EDITOR_SCALE);
 
   // Erase if Option+Click
-  const palNum = mouseEvent.altKey ? _backPalIndex : _forePalIndex;
+  const palNum = mouseEvent.altKey ? _appState.palette.backIndex : _appState.palette.foreIndex;
 
   const tileColor = _tile[uy * CHR_WIDTH + ux];
   if (tileColor != palNum) {
@@ -135,49 +115,30 @@ function onMouseMove(mouseEvent) {
   }
 }
 
-/**
- * Changes a pixel on the tile.
- */
+/** Changes a pixel on the tile. */
 function changePixel(ux, uy, palNum) {
   _tile[uy * CHR_WIDTH + ux] = palNum;
 
-  tiles.writeTile(_rom, _tile, _tileIndex);
-  _isROMDirty = true;
+  nesTiles.writeTile(_appState.rom, _tile, _appState.selectedTileIndex);
+  _appState.isDirty = true;
 
   drawPixel(ux, uy, palNum);
 
-  if (_onTileChangedFn) {
-    _onTileChangedFn(_tileIndex);
+  if (_onTileDataChangedFn) {
+    _onTileDataChangedFn();
   }
 }
 
-/**
- * Draws a pixel on scaled canvas given unscaled coordinates.
- */
+/** Draws a pixel on scaled canvas given unscaled coordinates. */
 function drawPixel(ux, uy, palNum) {
   // Draw a 1x1 fillRect direclty on the scaled canvas.
   const canvas = document.getElementById('editorCanvas');
   let ctx = cmn.getContext2DNA(canvas);
-  ctx.fillStyle = cmn.toCSSColorStr(_palette[palNum]);
+  ctx.fillStyle = cmn.toCSSColorStr(_appState.palette.data[palNum]);
   ctx.fillRect(ux, uy, 1, 1);
 }
 
-/**
- * Sets the palette of form [[r,g,b,a]].
- */
-exports.setPalette = function(palette) {
-  _palette = palette;
+/** Re-draws with the new palette */
+exports.paletteChanged = function() {
   if (_tile) drawEditorView(_tile);
 }
-
-/**
- * Sets the foreground and background palette index.
- */
-exports.setForeBackPaletteIndex = function(forePalIndex, backPalIndex) {
-  _forePalIndex = forePalIndex;
-  _backPalIndex = backPalIndex;
-}
-
-ipcRenderer.on('palette-update', function (event, palette) {
-  exports.setPalette(palette);
-});
