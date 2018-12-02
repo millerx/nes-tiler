@@ -5,7 +5,7 @@
 const {ipcRenderer} = require('electron');
 const cmn = require('./common.js');
 const {CHR_WIDTH, CHR_HEIGHT} = require('./nesPatternTable.js');
-const tiles = require('./nesRomTiles.js');
+const nesTiles = require('./nesRomTiles.js');
 
 const EDITOR_SCALE = 16;
 
@@ -66,7 +66,7 @@ exports.loadROM = function() {
 
 /** Loads a tile into the Editor View. */
 exports.selectedTileChanged = function() {
-  _tile = tiles.readTile(_appState.rom, _appState.selectedTileIndex);
+  _tile = nesTiles.readTile(_appState.rom, _appState.selectedTileIndex);
   drawEditorView(_tile);
 }
 
@@ -119,7 +119,7 @@ function onMouseMove(mouseEvent) {
 function changePixel(ux, uy, palNum) {
   _tile[uy * CHR_WIDTH + ux] = palNum;
 
-  tiles.writeTile(_appState.rom, _tile, _appState.selectedTileIndex);
+  nesTiles.writeTile(_appState.rom, _tile, _appState.selectedTileIndex);
   _appState.isDirty = true;
 
   drawPixel(ux, uy, palNum);

@@ -66,6 +66,7 @@ app.on('activate', function () {
 // Open the color-selector window as a modal child window.
 ipcMain.on('open-color-selector', function (event, palette, palIndex) {
   if (colorSelectWindow) {
+    colorSelectWindow.webContents.send('palette-update', palette, palIndex);
     colorSelectWindow.show();
   } else {
     colorSelectWindow = new BrowserWindow({
