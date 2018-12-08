@@ -1,11 +1,9 @@
 // Code for the tileSetView that displays all tiles in a ROM.
 
-const {ipcRenderer} = require('electron');
 const cmn = require('./common.js');
 const domu = require('./domUtils.js');
 const nesChr = require('./nesPatternTable.js');
 const {CHR_WIDTH, CHR_HEIGHT, CHR_BYTE_SIZE} = require('./nesPatternTable.js');
-const tiles = require('./nesRomTiles.js');
 
 /* TileSetView is composed of a series of canvas elements 320x1024. Except for the last canvas
  * who's height is trimmed. I experimented with a canvas-per-tile but Chrome cannot handle
@@ -28,7 +26,6 @@ let _romPartitionSize = 0;  // ROM data partitioned per canvas element.
 
 let _selectedCanvas;  // Canvas element of the selected tile.
 let _unscaledCanvas;  // Offscreen canvas.
-let _onSelectedFn;  // fn(tileBytes)  Function called when a tile is selected.
 
 /** Calculates module fields based off the given zoom factor. */
 function calcZoomFactor(zf) {
@@ -131,9 +128,8 @@ function drawSelectedTile(tile) {
     x, y, CHR_WIDTH, CHR_HEIGHT); // dest
 }
 
-/** Look up selected tile and call the onSelected function. */
+/** Look up selected tile and fire the tileSelected event. */
 function onCanvasClick(event) {
-  if (!_onSelectedFn) return;
   if (!_appState.rom) return;
 
   // pixelXY = mouseEvent.offset*
@@ -144,7 +140,7 @@ function onCanvasClick(event) {
   const tileX = ~~(event.offsetX / CHR_WIDTH / _zoomFactor);
   const tileY = ~~(event.offsetY / CHR_HEIGHT / _zoomFactor);
   _appState.selectedTileIndex = _selectedCanvas._tileIndex + (tileY * _tileSetWidth) + tileX;
-  _onSelectedFn(_appState.selectedTileIndex);
+  document.dispatchEvent(new Event('tileSelected'));
 }
 
 /** Remove canvas elements under the tileSetWindow. */
@@ -190,6 +186,14 @@ function createUnscaledCanvas() {
   return canvas;
 }
 
+function onTileDataChanged(e) {
+  drawSelectedTile(e.detail.tile);
+}
+
+function onPaletteChanged() {
+  if (_appState.rom) redrawTileSet();
+}
+
 /** Called by renderer.js to initialize. */
 exports.init = function(appState) {
   _appState = appState;
@@ -205,11 +209,9 @@ exports.init = function(appState) {
   document.getElementById('zoom1x').addEventListener('click', onZoomClick);
   document.getElementById('zoom2x').addEventListener('click', onZoomClick);
   document.getElementById('zoom4x').addEventListener('click', onZoomClick);
-}
 
-/** Set function called when tile is selected. */
-exports.onSelected = function(fn) {
-  _onSelectedFn = fn;
+  document.addEventListener('tileDataChanged', onTileDataChanged);
+  document.addEventListener('paletteChanged', onPaletteChanged);
 }
 
 /** Loads and displays the tileset of the given ROM. */
@@ -219,12 +221,4 @@ exports.loadROM = function() {
   // TODO: Re-use canvases?
   removeCanvases();
   drawTileSet();
-}
-
-exports.tileDataChanged = function(tile) {
-  drawSelectedTile(tile);
-}
-
-exports.paletteChanged = function() {
-  if (_appState.rom) redrawTileSet();
 }

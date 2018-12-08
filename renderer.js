@@ -30,14 +30,6 @@ function init() {
   tileSetView.init(_appState);
   editorView.init(_appState);
   paletteView.init(_appState);
-
-  // Wire up events.
-  tileSetView.onSelected(editorView.selectedTileChanged);
-  editorView.onTileDataChanged(tileSetView.tileDataChanged);
-  paletteView.onPaletteChanged(function () {
-    editorView.paletteChanged();
-    tileSetView.paletteChanged();
-  });
 }
 init();
 

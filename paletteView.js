@@ -12,7 +12,6 @@ const _defaultPalette = [  // Array of colors.  Each color is an rgba array.  [[
   [255, 255, 255, 255]]; // white
 
 let _appState = {};
-let _onPaletteChangedFn;  // Called when the palette has changed.
 let _palForeElem;
 let _palBackElem;
 let _palElems = [];
@@ -42,10 +41,6 @@ exports.getDefaultPalette = function() {
 	return _defaultPalette;
 }
 
-exports.onPaletteChanged = function(fn) {
-  _onPaletteChangedFn = fn;
-}
-
 exports.swapForeBackColors = function() {
   const foreIndex = _appState.palette.foreIndex;
   _appState.palette.foreIndex = _appState.palette.backIndex;
@@ -69,16 +64,18 @@ function onPaletteClick(event) {
   }
 }
 
-function onResetPaletteClick(event) {
-  _appState.palette.data = _defaultPalette.slice();
+function updatePalette(palette) {
+  _appState.palette.data = palette;
   setPaletteDivs();
-  if (_onPaletteChangedFn) _onPaletteChangedFn();
+  document.dispatchEvent(new Event('paletteChanged'));
+}
+
+function onResetPaletteClick(event) {
+  updatePalette(_defaultPalette.slice());
 }
 
 ipcRenderer.on('palette-update', function (event, palette) {
-  _appState.palette.data = palette;
-  setPaletteDivs();
-  if (_onPaletteChangedFn) _onPaletteChangedFn();
+  updatePalette(palette);
 });
 
 /** Called by renderer.js to initialize. */
