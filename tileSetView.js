@@ -221,8 +221,7 @@ exports.loadROM = function() {
   drawTileSet();
 }
 
-exports.tileDataChanged = function() {
-  const tile = tiles.readTile(_appState.rom, _appState.selectedTileIndex);
+exports.tileDataChanged = function(tile) {
   drawSelectedTile(tile);
 }
 

@@ -125,7 +125,7 @@ function changePixel(ux, uy, palNum) {
   drawPixel(ux, uy, palNum);
 
   if (_onTileDataChangedFn) {
-    _onTileDataChangedFn();
+    _onTileDataChangedFn(_tile);
   }
 }
 
