@@ -195,8 +195,8 @@ function onPaletteChanged() {
 }
 
 /** Called by renderer.js to initialize. */
-exports.init = function(appState) {
-  _appState = appState;
+document.addEventListener('appInit', function(e) {
+  _appState = e.detail.appState;
 
   calcZoomFactor(2);
   document.getElementById('zoom2x').className = 'buttonLikeSelectedText';
@@ -212,7 +212,7 @@ exports.init = function(appState) {
 
   document.addEventListener('tileDataChanged', onTileDataChanged);
   document.addEventListener('paletteChanged', onPaletteChanged);
-}
+});
 
 /** Loads and displays the tileset of the given ROM. */
 exports.loadROM = function() {

@@ -22,16 +22,10 @@ let _appState = {
   }
 }
 
-/**
- * Initialize views.
- */
-function init() {
-  // Init views
-  tileSetView.init(_appState);
-  editorView.init(_appState);
-  paletteView.init(_appState);
-}
-init();
+// Initialize views.
+document.dispatchEvent(new CustomEvent('appInit', {
+  detail: {appState: _appState}
+}));
 
 /**
  * Open ROM event from menu.

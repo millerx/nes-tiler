@@ -79,8 +79,8 @@ ipcRenderer.on('palette-update', function (event, palette) {
 });
 
 /** Called by renderer.js to initialize. */
-exports.init = function(appState) {
-  _appState = appState;
+document.addEventListener('appInit', function(e) {
+  _appState = e.detail.appState;
 
   const elems = domu.getChildElements(document.getElementById('palette'));
   _palBackElem = elems[0];
@@ -91,4 +91,4 @@ exports.init = function(appState) {
 
   _palElems.forEach(p => p.addEventListener('click', onPaletteClick));
   document.getElementById('resetPalette').addEventListener('click', onResetPaletteClick);
-}
+});

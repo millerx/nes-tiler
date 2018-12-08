@@ -130,12 +130,12 @@ function onPaletteChanged() {
 }
 
 /** Called by renderer.js to initialize. */
-exports.init = function(appState) {
-  _appState = appState;
+document.addEventListener('appInit', function(e) {
+  _appState = e.detail.appState;
 
   initEditorCanvas();
   _unscaledCanvas = createUnscaledCanvas();
 
   document.addEventListener('tileSelected', onTileSelected);
   document.addEventListener('paletteChanged', onPaletteChanged);
-}
+});
