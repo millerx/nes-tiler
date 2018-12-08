@@ -2,7 +2,6 @@
 // Unscaled coordinates are tile coordinates.  An 8x8 grid.
 // Scaled coordinates are screen pixels.  If 16 screen pixels represent one tile pixel then tile coord 1,1 is screen coord 16,16.
 
-const {ipcRenderer} = require('electron');
 const cmn = require('./common.js');
 const {CHR_WIDTH, CHR_HEIGHT} = require('./nesPatternTable.js');
 const nesTiles = require('./nesRomTiles.js');
@@ -14,15 +13,6 @@ let _appState = {};
 let _unscaledCanvas;  // Offscreen canvas.
 let _mouseDown = false;  // Is the mouse currently pressed down?
 let _tile;  // Deinterlaced tile.
-let _onTileDataChangedFn;  // Called when tile data has changed.
-
-/** Called by renderer.js to initialize. */
-exports.init = function(appState) {
-  _appState = appState;
-
-  initEditorCanvas();
-  _unscaledCanvas = createUnscaledCanvas();
-}
 
 /** Initialize visible canvas. */
 function initEditorCanvas() {
@@ -52,22 +42,12 @@ function createUnscaledCanvas() {
   return canvas;
 }
 
-exports.onTileDataChanged = function(fn) {
-  _onTileDataChangedFn = fn;
-}
-
 exports.loadROM = function() {
   // Reset in case this is not the first ROM we have loaded.
   _tile = null;
 
   // Clear the canvas in case this is not the first ROM we have loaded.
   clearEditorView();
-}
-
-/** Loads a tile into the Editor View. */
-exports.selectedTileChanged = function() {
-  _tile = nesTiles.readTile(_appState.rom, _appState.selectedTileIndex);
-  drawEditorView(_tile);
 }
 
 function clearEditorView() {
@@ -124,9 +104,9 @@ function changePixel(ux, uy, palNum) {
 
   drawPixel(ux, uy, palNum);
 
-  if (_onTileDataChangedFn) {
-    _onTileDataChangedFn(_tile);
-  }
+  document.dispatchEvent(new CustomEvent('tileDataChanged', {
+    detail: {tile: _tile}
+  }));
 }
 
 /** Draws a pixel on scaled canvas given unscaled coordinates. */
@@ -138,7 +118,24 @@ function drawPixel(ux, uy, palNum) {
   ctx.fillRect(ux, uy, 1, 1);
 }
 
+
+function onTileSelected() {
+  _tile = nesTiles.readTile(_appState.rom, _appState.selectedTileIndex);
+  drawEditorView(_tile);
+}
+
 /** Re-draws with the new palette */
-exports.paletteChanged = function() {
+function onPaletteChanged() {
   if (_tile) drawEditorView(_tile);
 }
+
+/** Called by renderer.js to initialize. */
+document.addEventListener('appInit', function(e) {
+  _appState = e.detail.appState;
+
+  initEditorCanvas();
+  _unscaledCanvas = createUnscaledCanvas();
+
+  document.addEventListener('tileSelected', onTileSelected);
+  document.addEventListener('paletteChanged', onPaletteChanged);
+});
